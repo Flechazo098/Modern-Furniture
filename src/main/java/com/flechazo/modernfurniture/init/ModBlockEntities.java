@@ -1,8 +1,9 @@
 package com.flechazo.modernfurniture.init;
 
 import com.flechazo.modernfurniture.ModernFurniture;
-import com.flechazo.modernfurniture.block.DisplayBlockEntity;
-import com.flechazo.modernfurniture.block.LaptopBlockEntity;
+import com.flechazo.modernfurniture.block.entity.AirConditioningBlockEntity;
+import com.flechazo.modernfurniture.block.entity.DisplayBlockEntity;
+import com.flechazo.modernfurniture.block.entity.LaptopBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -22,4 +23,9 @@ public class ModBlockEntities {
         BLOCK_ENTITIES.register("laptop_block_entity", () ->
             BlockEntityType.Builder.of(LaptopBlockEntity::new, 
                 ModBlocks.LAPTOP.get()).build(null));
+                
+    public static final RegistryObject<BlockEntityType<AirConditioningBlockEntity>> AIR_CONDITIONING_BLOCK_ENTITY =
+        BLOCK_ENTITIES.register("wall_mounted_air_conditioning_block_entity", () ->
+            BlockEntityType.Builder.of(AirConditioningBlockEntity::new, 
+                ModBlocks.WALL_MOUNTED_AIR_CONDITIONING.get()).build(null));
 }

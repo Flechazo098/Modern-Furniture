@@ -1,4 +1,4 @@
-package com.flechazo.modernfurniture.block;
+package com.flechazo.modernfurniture.block.entity;
 
 import com.flechazo.modernfurniture.init.ModBlockEntities;
 import net.minecraft.core.BlockPos;

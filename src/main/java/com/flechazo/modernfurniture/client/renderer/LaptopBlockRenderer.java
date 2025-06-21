@@ -1,7 +1,7 @@
 package com.flechazo.modernfurniture.client.renderer;
 
 import com.flechazo.modernfurniture.block.LaptopBlock;
-import com.flechazo.modernfurniture.block.LaptopBlockEntity;
+import com.flechazo.modernfurniture.block.entity.LaptopBlockEntity;
 import com.flechazo.modernfurniture.client.model.LaptopBlockModel;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;

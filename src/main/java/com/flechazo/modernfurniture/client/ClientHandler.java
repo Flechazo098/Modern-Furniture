@@ -1,6 +1,7 @@
 package com.flechazo.modernfurniture.client;
 
 import com.flechazo.modernfurniture.ModernFurniture;
+import com.flechazo.modernfurniture.client.renderer.AirConditioningBlockRenderer;
 import com.flechazo.modernfurniture.client.renderer.DisplayBlockRenderer;
 import com.flechazo.modernfurniture.client.renderer.LaptopBlockRenderer;
 import com.flechazo.modernfurniture.init.ModBlockEntities;
@@ -20,5 +21,6 @@ public class ClientHandler {
     private static void registerRenderers() {
         BlockEntityRenderers.register(ModBlockEntities.DISPLAY_BLOCK_ENTITY.get(), context -> new DisplayBlockRenderer());
         BlockEntityRenderers.register(ModBlockEntities.LAPTOP_BLOCK_ENTITY.get(), context -> new LaptopBlockRenderer());
+        BlockEntityRenderers.register(ModBlockEntities.AIR_CONDITIONING_BLOCK_ENTITY.get(), context -> new AirConditioningBlockRenderer());
     }
 }

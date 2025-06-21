@@ -3,7 +3,7 @@ package com.flechazo.modernfurniture.client.model;
 import com.flechazo.modernfurniture.ModernFurniture;
 import com.flechazo.modernfurniture.block.AbstractDisplayBlock;
 import com.flechazo.modernfurniture.block.BlackDisplayBlock;
-import com.flechazo.modernfurniture.block.DisplayBlockEntity;
+import com.flechazo.modernfurniture.block.entity.DisplayBlockEntity;
 import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.model.GeoModel;
 

@@ -18,4 +18,7 @@ public class ModBlockItem {
             
     public static final RegistryObject<Item> LAPTOP_ITEM = ITEMS.register("laptop",
             () -> new BlockItem(ModBlocks.LAPTOP.get(), new Item.Properties()));
+            
+    public static final RegistryObject<Item> WALL_MOUNTED_AIR_CONDITIONING_ITEM = ITEMS.register("wall_mounted_air_conditioning",
+            () -> new BlockItem(ModBlocks.WALL_MOUNTED_AIR_CONDITIONING.get(), new Item.Properties()));
 }

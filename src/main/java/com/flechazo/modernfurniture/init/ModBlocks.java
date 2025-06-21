@@ -1,6 +1,7 @@
 package com.flechazo.modernfurniture.init;
 
 import com.flechazo.modernfurniture.ModernFurniture;
+import com.flechazo.modernfurniture.block.AirConditioningBlock;
 import com.flechazo.modernfurniture.block.BlackDisplayBlock;
 import com.flechazo.modernfurniture.block.LaptopBlock;
 import com.flechazo.modernfurniture.block.WhiteDisplayBlock;
@@ -16,4 +17,5 @@ public class ModBlocks {
     public static final RegistryObject<Block> BLACK_DISPLAY = BLOCKS.register("black_display", BlackDisplayBlock::new);
     public static final RegistryObject<Block> WHITE_DISPLAY = BLOCKS.register("white_display", WhiteDisplayBlock::new);
     public static final RegistryObject<Block> LAPTOP = BLOCKS.register("laptop", LaptopBlock::new);
+    public static final RegistryObject<Block> WALL_MOUNTED_AIR_CONDITIONING = BLOCKS.register("wall_mounted_air_conditioning", AirConditioningBlock::new);
 }

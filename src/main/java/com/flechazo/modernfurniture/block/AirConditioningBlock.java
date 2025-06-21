@@ -1,8 +1,11 @@
 package com.flechazo.modernfurniture.block;
 
-import com.flechazo.modernfurniture.block.entity.LaptopBlockEntity;
+import com.flechazo.modernfurniture.block.entity.AirConditioningBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -21,29 +24,27 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.Arrays;
+import java.util.stream.Stream;
 
-public class LaptopBlock extends Block implements EntityBlock {
+public class AirConditioningBlock extends Block implements EntityBlock {
     public static final BooleanProperty OPEN = BooleanProperty.create("open");
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
-    private static final VoxelShape CLOSED_SHAPE = Shapes.or(
-        Shapes.box(1/16.0, 0/16.0, 0.8/16.0, 15/16.0, 0.5/16.0, 10.8/16.0),
-        Shapes.box(1/16.0, 0.5/16.0, 0.8/16.0, 15/16.0, 0.75/16.0, 10.8/16.0)
-    );
-
-    private static final VoxelShape OPEN_SHAPE = Shapes.or(
-        Shapes.box(1/16.0, 0/16.0, 0.8/16.0, 15/16.0, 0.5/16.0, 10.8/16.0),
-        Shapes.box(1/16.0, 0.425/16.0, 10.475/16.0, 15/16.0, 10.425/16.0, 10.725/16.0)
-    );
+    private static final VoxelShape BASE_SHAPE = Stream.of(
+        Block.box(-4, 0.11864, 12.4122, 20, 1.11864, 12.6622),
+        Block.box(-4, 0.5, 11.75, 20, 6, 12.5),
+        Block.box(-4, 0, 12.5, 20, 6, 16)
+    ).reduce((v1, v2) -> Shapes.join(v1, v2, BooleanOp.OR)).get();
     
-    public LaptopBlock() {
+    public AirConditioningBlock() {
         super(BlockBehaviour.Properties.of()
-                .strength(1.5F, 3.0F)
+                .strength(2.0F, 4.0F)
                 .noOcclusion()
                 .sound(SoundType.METAL)
         );
@@ -74,8 +75,8 @@ public class LaptopBlock extends Block implements EntityBlock {
         if (!level.isClientSide) {
             boolean isOpen = state.getValue(OPEN);
             BlockEntity blockEntity = level.getBlockEntity(pos);
-            if (blockEntity instanceof LaptopBlockEntity laptopEntity) {
-                laptopEntity.triggerAnimation(!isOpen);
+            if (blockEntity instanceof AirConditioningBlockEntity acEntity) {
+                acEntity.triggerAnimation(!isOpen);
             }
             level.setBlock(pos, state.setValue(OPEN, !isOpen), 3);
         }
@@ -83,18 +84,44 @@ public class LaptopBlock extends Block implements EntityBlock {
     }
 
     @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (state.getValue(OPEN)) {
+            // 发射霜降粒子效果
+            Direction facing = state.getValue(FACING);
+            double x = pos.getX() + 0.5;
+            double y = pos.getY() + 0.3;
+            double z = pos.getZ() + 0.5;
+            
+            // 根据朝向调整粒子发射位置
+            switch (facing) {
+                case NORTH -> z -= 0.4;
+                case SOUTH -> z += 0.4;
+                case WEST -> x -= 0.4;
+                case EAST -> x += 0.4;
+            }
+            
+            // 发射多个粒子
+            for (int i = 0; i < 3; i++) {
+                double offsetX = (random.nextDouble() - 0.5) * 0.3;
+                double offsetY = (random.nextDouble() - 0.5) * 0.2;
+                double offsetZ = (random.nextDouble() - 0.5) * 0.3;
+                
+                level.addParticle(ParticleTypes.SNOWFLAKE,
+                    x + offsetX, y + offsetY, z + offsetZ,
+                    0.0, -0.1, 0.0);
+            }
+        }
+    }
+
+    @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new LaptopBlockEntity(pos, state);
+        return new AirConditioningBlockEntity(pos, state);
     }
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        boolean isOpen = state.getValue(OPEN);
         Direction facing = state.getValue(FACING);
-        
-        VoxelShape shape = isOpen ? OPEN_SHAPE : CLOSED_SHAPE;
-
-        return rotateShape(shape, facing);
+        return rotateShape(BASE_SHAPE, facing);
     }
     
     private VoxelShape rotateShape(VoxelShape shape, Direction facing) {

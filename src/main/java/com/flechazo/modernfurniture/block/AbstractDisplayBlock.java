@@ -114,7 +114,6 @@ public abstract class AbstractDisplayBlock extends Block implements EntityBlock 
     // 旋转单个 AABB 到指定朝向
     private VoxelShape rotateAABB(AABB aabb, Direction facing) {
         return switch (facing) {
-            case NORTH -> Shapes.create(aabb);
             case SOUTH -> Shapes.create(  // 南向旋转 180°
                     1 - aabb.maxX, aabb.minY, 1 - aabb.maxZ,
                     1 - aabb.minX, aabb.maxY, 1 - aabb.minZ

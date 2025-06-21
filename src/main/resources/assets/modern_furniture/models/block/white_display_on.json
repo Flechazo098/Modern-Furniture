@@ -1,0 +1,6 @@
+{
+  "parent": "modern_furniture:item/white_display",
+  "textures": {
+    "0": "modern_furniture:block/display_white_on"
+  }
+}

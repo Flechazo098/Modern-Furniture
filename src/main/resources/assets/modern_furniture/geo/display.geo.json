@@ -12,7 +12,7 @@
       },
       "bones": [
         {
-          "name": "dizuo",
+          "name": "base",
           "pivot": [-0.44199, 0.125, 0.49223],
           "cubes": [
             {
@@ -58,7 +58,7 @@
           ]
         },
         {
-          "name": "zhuti",
+          "name": "main",
           "pivot": [0, 0, 0],
           "cubes": [
             {

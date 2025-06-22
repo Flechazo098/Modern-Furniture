@@ -1,5 +1,7 @@
 {
+  "itemGroup.modern_furniture": "Modern Furniture",
   "block.modern_furniture.black_display": "Black Display",
   "block.modern_furniture.white_display": "White Display",
-  "block.modern_furniture.laptop": "Laptop"
+  "block.modern_furniture.laptop": "Laptop",
+  "block.modern_furniture.wall_mounted_air_conditioning": "Wall Mounted Air Conditioning"
 }

@@ -4,6 +4,7 @@ import com.flechazo.modernfurniture.config.RoomDetectorConfig;
 import com.flechazo.modernfurniture.init.ModBlockEntities;
 import com.flechazo.modernfurniture.init.ModBlockItem;
 import com.flechazo.modernfurniture.init.ModBlocks;
+import com.flechazo.modernfurniture.init.ModCreativeTab;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
@@ -20,6 +21,7 @@ public class ModernFurniture {
         ModBlocks.BLOCKS.register(modEventBus);
         ModBlockItem.ITEMS.register(modEventBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
+        ModCreativeTab.CREATIVE_MODE_TABS.register(modEventBus);
 
         RoomDetectorConfig.register(context);
     }

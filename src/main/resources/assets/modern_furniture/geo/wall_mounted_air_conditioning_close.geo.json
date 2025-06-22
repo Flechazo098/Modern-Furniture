@@ -8,18 +8,18 @@
 				"texture_height": 64,
 				"visible_bounds_width": 3,
 				"visible_bounds_height": 1.5,
-				"visible_bounds_offset": [0, 0.25, 0]
+				"visible_bounds_offset": [0, 0.75, 0]
 			},
 			"bones": [
 				{
 					"name": "ac_blades",
-					"pivot": [0, 0.12, 4.42],
+					"pivot": [0, 10.12, 4.42],
 					"rotation": [92.5, 0, 0],
 					"cubes": [
 						{
-							"origin": [-12, 0.11864, 4.4122],
+							"origin": [-12, 10.11864, 4.4122],
 							"size": [24, 1, 0.25],
-							"pivot": [0, 0.12, 4.67],
+							"pivot": [0, 10.12, 4.67],
 							"rotation": [52.5, 0, 0],
 							"uv": {
 								"north": {"uv": [25, 24], "uv_size": [24, 0.75]},
@@ -37,7 +37,7 @@
 					"pivot": [0, 0, 0],
 					"cubes": [
 						{
-							"origin": [-12, 0.5, 3.75],
+							"origin": [-12, 10.5, 3.75],
 							"size": [24, 5.5, 0.75],
 							"uv": {
 								"north": {"uv": [0, 14], "uv_size": [24, 5.5]},
@@ -49,7 +49,7 @@
 							}
 						},
 						{
-							"origin": [-12, 0, 4.5],
+							"origin": [-12, 10, 4.5],
 							"size": [24, 6, 3.5],
 							"uv": {
 								"north": {"uv": [0, 0], "uv_size": [24, 6]},

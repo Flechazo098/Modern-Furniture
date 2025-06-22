@@ -1,3 +1,6 @@
 {
-  "parent": "modern_furniture:item/black_display"
+  "parent": "block/cube_all",
+  "textures": {
+    "all": "modern_furniture:block/display_black_off"
+  }
 }

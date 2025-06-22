@@ -41,9 +41,9 @@ public class AirConditioningBlock extends Block implements EntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     private static final VoxelShape BASE_SHAPE = Stream.of(
-            Block.box(- 4, 0.11864, 12.4122, 20, 1.11864, 12.6622),
-            Block.box(- 4, 0.5, 11.75, 20, 6, 12.5),
-            Block.box(- 4, 0, 12.5, 20, 6, 16)
+            Block.box(-4, 10.11864, 12.4122, 20, 11.11864, 12.6622),  // 叶片部分
+            Block.box(-4, 10.5, 11.75, 20, 16, 12.5),                 // 前面板
+            Block.box(-4, 10, 12.5, 20, 16, 16)                       // 主体
     ).reduce((v1, v2) -> Shapes.join(v1, v2, BooleanOp.OR)).get();
 
     public AirConditioningBlock () {

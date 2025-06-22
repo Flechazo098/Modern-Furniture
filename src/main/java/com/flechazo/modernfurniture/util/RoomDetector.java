@@ -1,5 +1,6 @@
 package com.flechazo.modernfurniture.util;
 
+import com.flechazo.modernfurniture.ModernFurniture;
 import com.flechazo.modernfurniture.config.RoomDetectorConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -38,9 +39,9 @@ public class RoomDetector {
         }
 
         // 从配置获取参数
-        final int maxRadius = RoomDetectorConfig.getMaxRadius();
-        final int maxVolume = RoomDetectorConfig.getMaxRoomVolume();
-        final long maxTime = RoomDetectorConfig.getMaxTimeMs();
+        final int maxRadius = RoomDetectorConfig.getMaxSearchDistance();
+        final int maxVolume = RoomDetectorConfig.getMaxRoomSize();
+        final long maxTime = RoomDetectorConfig.getMaxSearchTimeMs();
 
         final int minX = startPos.getX() - maxRadius;
         final int maxX = startPos.getX() + maxRadius;
@@ -58,11 +59,11 @@ public class RoomDetector {
         while (!queue.isEmpty()) {
             if (++processed % 1000 == 0) {
                 if (System.currentTimeMillis() - startTime > maxTime) {
-                    System.out.println("[房间检测] 超时: " + processed + "方块, " + (System.currentTimeMillis() - startTime) + "ms");
+                    ModernFurniture.LOGGER.debug("[房间检测] 超时: {}方块, {}ms", processed, System.currentTimeMillis() - startTime);
                     return Collections.emptySet();
                 }
                 if (roomBlocks.size() >= maxVolume) {
-                    System.out.println("[房间检测] 体积过大: " + roomBlocks.size() + "方块, " + (System.currentTimeMillis() - startTime) + "ms");
+                    ModernFurniture.LOGGER.debug("[房间检测] 体积过大: {}方块, {}ms", roomBlocks.size(), System.currentTimeMillis() - startTime);
                     return Collections.emptySet();
                 }
             }
@@ -81,7 +82,7 @@ public class RoomDetector {
         }
 
         long elapsed = System.currentTimeMillis() - startTime;
-        System.out.println("[房间检测] 完成: " + roomBlocks.size() + "方块, " + elapsed + "ms");
+        ModernFurniture.LOGGER.debug("[房间检测] 完成: {}方块, {}ms", roomBlocks.size(), elapsed);
 
         return roomBlocks;
     }

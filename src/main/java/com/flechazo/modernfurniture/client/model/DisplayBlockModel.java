@@ -16,13 +16,13 @@ public class DisplayBlockModel extends GeoModel<DisplayBlockEntity> {
     @Override
     public ResourceLocation getTextureResource(DisplayBlockEntity animatable) {
         boolean isPowered = animatable.getBlockState().getValue(AbstractDisplayBlock.POWERED);
-        
+
         if (animatable.getBlockState().getBlock() instanceof BlackDisplayBlock) {
             return ResourceLocation.fromNamespaceAndPath(ModernFurniture.MODID,
-                isPowered ? "textures/block/display_black_on.png" : "textures/block/display_black_off.png");
+                    isPowered ? "textures/block/display_black_on.png" : "textures/block/display_black_off.png");
         } else {
             return ResourceLocation.fromNamespaceAndPath(ModernFurniture.MODID,
-                isPowered ? "textures/block/display_white_on.png" : "textures/block/display_white_off.png");
+                    isPowered ? "textures/block/display_white_on.png" : "textures/block/display_white_off.png");
         }
     }
 

@@ -14,7 +14,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class DisplayBlockEntity extends BlockEntity implements GeoBlockEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    
+
     public DisplayBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.DISPLAY_BLOCK_ENTITY.get(), pos, state);
     }

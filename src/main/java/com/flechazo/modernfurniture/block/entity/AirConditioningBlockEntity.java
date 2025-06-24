@@ -28,25 +28,20 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public class AirConditioningBlockEntity extends BlockEntity implements GeoBlockEntity {
+    private static final long PERFORMANCE_LOG_INTERVAL = 60000;
+    private static final RawAnimation OPEN_ANIMATION = RawAnimation.begin().thenPlayAndHold("open");
+    private static final RawAnimation CLOSE_ANIMATION = RawAnimation.begin().thenPlayAndHold("close");
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    public boolean isOpen = false;
     private CompletableFuture<Void> roomDetectionFuture;
-
     private boolean isAnimating = false;
     private String currentAnimation = "";
-    public boolean isOpen = false;
     private boolean needsAnimationSync = false;
-
     private boolean isCooling = false;
     private long coolingStartTime = 0;
     private Set<BlockPos> roomBlocks = null;
-
     private SnowManager snowManager = null;
-
     private long lastPerformanceLog = 0;
-    private static final long PERFORMANCE_LOG_INTERVAL = 60000;
-
-    private static final RawAnimation OPEN_ANIMATION = RawAnimation.begin().thenPlayAndHold("open");
-    private static final RawAnimation CLOSE_ANIMATION = RawAnimation.begin().thenPlayAndHold("close");
 
     public AirConditioningBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.AIR_CONDITIONING_BLOCK_ENTITY.get(), pos, state);
@@ -263,7 +258,7 @@ public class AirConditioningBlockEntity extends BlockEntity implements GeoBlockE
 
             if (snowManager != null) {
                 SnowManager.SnowStats stats = snowManager.getSnowStats();
-                 ModernFurniture.LOGGER.debug("降雪性能统计: {}", stats);
+                ModernFurniture.LOGGER.debug("降雪性能统计: {}", stats);
             }
         }
     }

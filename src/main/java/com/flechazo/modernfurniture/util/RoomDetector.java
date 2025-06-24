@@ -7,7 +7,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -67,7 +70,6 @@ import java.util.concurrent.CompletableFuture;
  *
  * @author flechazo
  * @version 0.0.1
- *
  * @see BlockPos 使用Minecraft坐标系表示方块位置
  * @see Level 表示检测目标世界
  * @see RoomDetectorConfig 获取搜索参数配置
@@ -77,10 +79,9 @@ public class RoomDetector {
     /**
      * 执行封闭空间检测
      *
-     * @param world 目标世界对象
+     * @param world    目标世界对象
      * @param startPos 检测起始坐标
      * @return 包含所有可通过方块的集合，若失败返回空集合
-     *
      * @implNote 典型处理时间与房间体积成正比，10,000方块约需50-100ms
      */
     public static Set<BlockPos> findRoom(Level world, BlockPos startPos) {
@@ -172,7 +173,7 @@ public class RoomDetector {
      * 检查方块是否可通过
      *
      * @param level 世界对象
-     * @param pos 方块位置
+     * @param pos   方块位置
      * @return 如果方块可通过返回true
      */
     public static boolean isPassable(Level level, BlockPos pos) {
@@ -187,10 +188,9 @@ public class RoomDetector {
     /**
      * 异步执行房间检测
      *
-     * @param world 目标世界对象
+     * @param world    目标世界对象
      * @param startPos 检测起始坐标
      * @return 包含搜索结果的CompletableFuture
-     *
      * @apiNote 建议配合thenAcceptAsync等异步方法使用
      * @implSpec 实际使用ForkJoinPool.commonPool()线程池
      */

@@ -17,7 +17,7 @@ public class ClientHandler {
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(ClientHandler::registerRenderers);
     }
-    
+
     private static void registerRenderers() {
         BlockEntityRenderers.register(ModBlockEntities.DISPLAY_BLOCK_ENTITY.get(), context -> new DisplayBlockRenderer());
         BlockEntityRenderers.register(ModBlockEntities.LAPTOP_BLOCK_ENTITY.get(), context -> new LaptopBlockRenderer());

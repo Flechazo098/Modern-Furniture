@@ -9,7 +9,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 
 public class ModCreativeTab {
-    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = 
+    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, ModernFurniture.MODID);
 
     public static final RegistryObject<CreativeModeTab> MODERN_FURNITURE_TAB = CREATIVE_MODE_TABS.register("modern_furniture_tab",

@@ -14,7 +14,7 @@ public class DisplayBlockRenderer extends GeoBlockRenderer<DisplayBlockEntity> {
     public DisplayBlockRenderer() {
         super(new DisplayBlockModel());
     }
-    
+
     @Override
     public void renderRecursively(PoseStack poseStack, DisplayBlockEntity animatable, GeoBone bone, RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
         boolean isPowered = animatable.getBlockState().getValue(AbstractDisplayBlock.POWERED);
@@ -22,7 +22,7 @@ public class DisplayBlockRenderer extends GeoBlockRenderer<DisplayBlockEntity> {
         if (bone.getName().equals("main") && isPowered) {
             packedLight = 15728880;
         }
-        
+
         super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }

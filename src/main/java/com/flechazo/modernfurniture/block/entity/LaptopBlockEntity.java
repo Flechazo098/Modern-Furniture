@@ -20,15 +20,13 @@ import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class LaptopBlockEntity extends BlockEntity implements GeoBlockEntity {
+    private static final RawAnimation OPEN_ANIMATION = RawAnimation.begin().thenPlayAndHold("laptop_open");
+    private static final RawAnimation CLOSE_ANIMATION = RawAnimation.begin().thenPlayAndHold("laptop_close");
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-
     private boolean isAnimating = false;
     private String currentAnimation = "";
     private boolean isOpen = false;
     private boolean needsAnimationSync = false;
-
-    private static final RawAnimation OPEN_ANIMATION = RawAnimation.begin().thenPlayAndHold("laptop_open");
-    private static final RawAnimation CLOSE_ANIMATION = RawAnimation.begin().thenPlayAndHold("laptop_close");
 
     public LaptopBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.LAPTOP_BLOCK_ENTITY.get(), pos, state);
@@ -37,8 +35,8 @@ public class LaptopBlockEntity extends BlockEntity implements GeoBlockEntity {
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "laptop_controller", 0, this::predicate)
-            .triggerableAnim("open", OPEN_ANIMATION)
-            .triggerableAnim("close", CLOSE_ANIMATION));
+                .triggerableAnim("open", OPEN_ANIMATION)
+                .triggerableAnim("close", CLOSE_ANIMATION));
     }
 
     private PlayState predicate(AnimationState<LaptopBlockEntity> animationState) {
@@ -81,6 +79,7 @@ public class LaptopBlockEntity extends BlockEntity implements GeoBlockEntity {
             setChanged();
         }
     }
+
     @Override
     public CompoundTag getUpdateTag() {
         CompoundTag tag = super.getUpdateTag();
@@ -107,7 +106,7 @@ public class LaptopBlockEntity extends BlockEntity implements GeoBlockEntity {
     }
 
     @Override
-    protected void saveAdditional (CompoundTag tag) {
+    protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
 
         tag.putBoolean("IsOpen", isOpen);

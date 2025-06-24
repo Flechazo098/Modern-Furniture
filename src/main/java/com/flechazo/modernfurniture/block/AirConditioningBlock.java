@@ -1,11 +1,9 @@
 package com.flechazo.modernfurniture.block;
 
 import com.flechazo.modernfurniture.block.entity.AirConditioningBlockEntity;
-import com.flechazo.modernfurniture.block.entity.LaptopBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -14,7 +12,6 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.SoundType;
@@ -24,16 +21,16 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import java.util.*;
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 public class AirConditioningBlock extends Block implements EntityBlock {
@@ -46,7 +43,7 @@ public class AirConditioningBlock extends Block implements EntityBlock {
             Block.box(-4, 10, 12.5, 20, 16, 16)                       // 主体
     ).reduce((v1, v2) -> Shapes.join(v1, v2, BooleanOp.OR)).get();
 
-    public AirConditioningBlock () {
+    public AirConditioningBlock() {
         super(BlockBehaviour.Properties.of()
                 .strength(2.0F, 4.0F)
                 .noOcclusion()
@@ -59,44 +56,44 @@ public class AirConditioningBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected void createBlockStateDefinition (StateDefinition.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(OPEN, FACING);
     }
 
     @Override
-    public BlockState getStateForPlacement (BlockPlaceContext context) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         return this.defaultBlockState()
                 .setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
     @Override
-    public RenderShape getRenderShape (BlockState state) {
+    public RenderShape getRenderShape(BlockState state) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
-    public InteractionResult use (BlockState state, Level level, BlockPos pos,
-                                  Player player, InteractionHand hand, BlockHitResult hit) {
-        if (! level.isClientSide) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos,
+                                 Player player, InteractionHand hand, BlockHitResult hit) {
+        if (!level.isClientSide) {
             boolean isOpen = state.getValue(OPEN);
             BlockEntity blockEntity = level.getBlockEntity(pos);
             if (blockEntity instanceof AirConditioningBlockEntity acEntity) {
-                acEntity.triggerAnimation(! isOpen);
+                acEntity.triggerAnimation(!isOpen);
 
                 // 当空调被打开时，开始房间检测和计时
-                if (! isOpen) {
+                if (!isOpen) {
                     acEntity.startCooling();
                 } else {
                     acEntity.stopCooling();
                 }
             }
-            level.setBlock(pos, state.setValue(OPEN, ! isOpen), 3);
+            level.setBlock(pos, state.setValue(OPEN, !isOpen), 3);
         }
         return InteractionResult.SUCCESS;
     }
 
     @Override
-    public void animateTick (BlockState state, Level level, BlockPos pos, RandomSource random) {
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         if (state.getValue(OPEN)) {
             // 发射霜降粒子效果
             Direction facing = state.getValue(FACING);
@@ -120,7 +117,7 @@ public class AirConditioningBlock extends Block implements EntityBlock {
 
                 level.addParticle(ParticleTypes.SNOWFLAKE,
                         x + offsetX, y + offsetY, z + offsetZ,
-                        0.0, - 0.1, 0.0);
+                        0.0, -0.1, 0.0);
             }
         }
     }
@@ -144,18 +141,18 @@ public class AirConditioningBlock extends Block implements EntityBlock {
     }
 
     @Override
-    public BlockEntity newBlockEntity (BlockPos pos, BlockState state) {
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new AirConditioningBlockEntity(pos, state);
     }
 
     @Override
-    public VoxelShape getShape (BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         Direction facing = state.getValue(FACING);
         return rotateShape(BASE_SHAPE, facing);
     }
 
 
-    private VoxelShape rotateShape (VoxelShape shape, Direction facing) {
+    private VoxelShape rotateShape(VoxelShape shape, Direction facing) {
         return switch (facing) {
             case SOUTH -> {
                 VoxelShape[] rotatedShapes = shape.toAabbs().stream()

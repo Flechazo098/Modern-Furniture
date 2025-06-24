@@ -12,8 +12,8 @@ public class AirConditioningBlockModel extends GeoModel<AirConditioningBlockEnti
         // 使用 BlockState 获取状态，而不是依赖可能延迟加载的 BlockEntity 内部字段
         boolean isOpen = animatable.getBlockState().getValue(AirConditioningBlock.OPEN);
         return isOpen ?
-            ResourceLocation.fromNamespaceAndPath(ModernFurniture.MODID, "geo/wall_mounted_air_conditioning_open.geo.json") :
-            ResourceLocation.fromNamespaceAndPath(ModernFurniture.MODID, "geo/wall_mounted_air_conditioning_close.geo.json");
+                ResourceLocation.fromNamespaceAndPath(ModernFurniture.MODID, "geo/wall_mounted_air_conditioning_open.geo.json") :
+                ResourceLocation.fromNamespaceAndPath(ModernFurniture.MODID, "geo/wall_mounted_air_conditioning_close.geo.json");
     }
 
     @Override
@@ -21,8 +21,8 @@ public class AirConditioningBlockModel extends GeoModel<AirConditioningBlockEnti
         // 同样使用 BlockState 获取状态
         boolean isOpen = animatable.getBlockState().getValue(AirConditioningBlock.OPEN);
         return isOpen ?
-            ResourceLocation.fromNamespaceAndPath(ModernFurniture.MODID, "textures/block/wall_mounted_air_conditioning_on.png") :
-            ResourceLocation.fromNamespaceAndPath(ModernFurniture.MODID, "textures/block/wall_mounted_air_conditioning_off.png");
+                ResourceLocation.fromNamespaceAndPath(ModernFurniture.MODID, "textures/block/wall_mounted_air_conditioning_on.png") :
+                ResourceLocation.fromNamespaceAndPath(ModernFurniture.MODID, "textures/block/wall_mounted_air_conditioning_off.png");
     }
 
     @Override

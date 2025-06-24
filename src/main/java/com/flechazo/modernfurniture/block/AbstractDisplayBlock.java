@@ -17,9 +17,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -80,11 +80,11 @@ public abstract class AbstractDisplayBlock extends Block implements EntityBlock 
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         Direction facing = state.getValue(FACING);
 
-        VoxelShape baseFoot1 = Shapes.box(7.94198729810778/16, 0/16, 7.742227771688616/16, 14.94198729810778/16, 0.75/16, 8.492227771688617/16);
-        VoxelShape baseFoot2 = Shapes.box(8.19198729810778/16, 0/16, 7.2622/16, 15.19198729810778/16, 0.75/16, 8.0122/16);
-        VoxelShape centerPillar = Shapes.box(7.25/16, 0/16, 7.65/16, 8.75/16, 4.6499999999999995/16, 8.5/16);
-        VoxelShape shieldMain = Shapes.box((double) - 2 /16, (double) 3 /16, 7.5/16, (double) 18 /16, (double) 7 /16, (double) 8 /16);
-        VoxelShape shieldBack = Shapes.box(-3.25/16, 2.5/16, 7.25/16, 19.25/16, 14.75/16, 7.75/16);
+        VoxelShape baseFoot1 = Shapes.box(7.94198729810778 / 16, 0 / 16, 7.742227771688616 / 16, 14.94198729810778 / 16, 0.75 / 16, 8.492227771688617 / 16);
+        VoxelShape baseFoot2 = Shapes.box(8.19198729810778 / 16, 0 / 16, 7.2622 / 16, 15.19198729810778 / 16, 0.75 / 16, 8.0122 / 16);
+        VoxelShape centerPillar = Shapes.box(7.25 / 16, 0 / 16, 7.65 / 16, 8.75 / 16, 4.6499999999999995 / 16, 8.5 / 16);
+        VoxelShape shieldMain = Shapes.box((double) -2 / 16, (double) 3 / 16, 7.5 / 16, (double) 18 / 16, (double) 7 / 16, (double) 8 / 16);
+        VoxelShape shieldBack = Shapes.box(-3.25 / 16, 2.5 / 16, 7.25 / 16, 19.25 / 16, 14.75 / 16, 7.75 / 16);
 
         VoxelShape shape = Shapes.or(
                 baseFoot1,

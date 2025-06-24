@@ -1,19 +1,15 @@
 package com.flechazo.modernfurniture.config;
 
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 public class RoomDetectorConfig {
-    private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     public static final ForgeConfigSpec SPEC;
-
     // 房间检测配置
     public static final ForgeConfigSpec.IntValue MAX_ROOM_SIZE;
     public static final ForgeConfigSpec.IntValue MAX_SEARCH_DISTANCE;
     public static final ForgeConfigSpec.IntValue MAX_SEARCH_TIME_MS;
-
     // 降雪配置
     public static final ForgeConfigSpec.BooleanValue ENABLE_SNOW;
     public static final ForgeConfigSpec.LongValue SNOW_DELAY_TICKS;
@@ -21,6 +17,7 @@ public class RoomDetectorConfig {
     public static final ForgeConfigSpec.DoubleValue GROUND_SNOW_PROBABILITY;
     public static final ForgeConfigSpec.IntValue MAX_SNOW_CYCLES;
     public static final ForgeConfigSpec.DoubleValue SNOW_COVERAGE_RATIO;
+    private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
 
     static {
         // 开始"房间检测"配置组
@@ -115,11 +112,11 @@ public class RoomDetectorConfig {
     public static double getGroundSnowProbability() {
         return GROUND_SNOW_PROBABILITY.get();
     }
-    
+
     public static int getMaxSnowCycles() {
         return MAX_SNOW_CYCLES.get();
     }
-    
+
     public static double getSnowCoverageRatio() {
         return SNOW_COVERAGE_RATIO.get();
     }

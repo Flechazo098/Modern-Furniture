@@ -1,7 +1,7 @@
 {
-  "itemGroup.modern_furniture": "现代家具",
-  "block.modern_furniture.black_display": "黑色显示器",
-  "block.modern_furniture.white_display": "白色显示器",
-  "block.modern_furniture.laptop": "笔记本电脑",
-  "block.modern_furniture.wall_mounted_air_conditioning": "壁挂式空调"
+    "itemGroup.modern_furniture": "现代家具",
+    "block.modern_furniture.black_display": "黑色显示器",
+    "block.modern_furniture.white_display": "白色显示器",
+    "block.modern_furniture.laptop": "笔记本电脑",
+    "block.modern_furniture.wall_mounted_air_conditioning": "壁挂式空调"
 }

@@ -1,14 +1,14 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "com.flechazo.modernfurniture.modern_furniture.mixin",
-  "compatibilityLevel": "JAVA_8",
-  "refmap": "modern_furniture.refmap.json",
-  "mixins": [
-  ],
-  "client": [
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+    "required": true,
+    "minVersion": "0.8",
+    "package": "com.flechazo.modernfurniture.modern_furniture.mixin",
+    "compatibilityLevel": "JAVA_8",
+    "refmap": "modern_furniture.refmap.json",
+    "mixins": [
+    ],
+    "client": [
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

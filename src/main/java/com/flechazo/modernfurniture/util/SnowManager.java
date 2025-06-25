@@ -107,36 +107,42 @@ import java.util.concurrent.atomic.AtomicReference;
  * @see DynamicParameters 内部动态参数调整系统
  */
 public class SnowManager {
-    private static final int MAX_CACHE_SIZE = 64;
-    private static final long CACHE_TTL_MS = 30000; // 30秒TTL
-    private static final long ASYNC_TIMEOUT_MS = 5000; // 5秒超时
-    private static final long MEMORY_CHECK_INTERVAL = 10000; // 10秒检查一次内存
     // ===== 核心字段 =====
     private final ServerLevel level;
     private final Set<BlockPos> roomBlocks;
     private final Map<BlockPos, Integer> snowLayers;
     private final Set<BlockPos> snowedPositions;
     private final RandomSource random;
+
     // ===== 高级分区系统 =====
     private final Map<SectionPos, Set<BlockPos>> sectionPartitions;
     private final Map<ChunkPos, Set<SectionPos>> chunkToSections;
     private final Set<SectionPos> activeSections;
+
     // ===== 智能缓存系统 =====
     private final Map<SectionPos, CacheEntry> validPositionCache;
     private final Queue<SectionPos> cacheAccessOrder;
+    private static final int MAX_CACHE_SIZE = 64;
+    private static final long CACHE_TTL_MS = 30000; // 30秒TTL
+
     // ===== 异步任务管理 =====
     private final ScheduledExecutorService scheduledExecutor;
     private final ExecutorService computeExecutor;
     private final AtomicReference<CompletableFuture<List<SnowOperation>>> pendingOperations;
+    private static final long ASYNC_TIMEOUT_MS = 5000; // 5秒超时
+
     // ===== 动态算法参数 =====
     private final DynamicParameters dynamicParams;
     private final PerformanceMonitor perfMonitor;
-    // ===== 资源监控 =====
-    private final MemoryMXBean memoryBean;
+
     // ===== 时间控制 =====
     private long lastSnowTime = 0;
     private int snowCycles = 0;
+
+    // ===== 资源监控 =====
+    private final MemoryMXBean memoryBean;
     private long lastMemoryCheck = 0;
+    private static final long MEMORY_CHECK_INTERVAL = 10000; // 10秒检查一次内存
 
     // ===== 构造函数 =====
     public SnowManager(ServerLevel level, Set<BlockPos> roomBlocks) {
@@ -175,6 +181,106 @@ public class SnowManager {
         // 启动定期清理任务
         scheduledExecutor.scheduleAtFixedRate(this::performMaintenance, 30, 30, TimeUnit.SECONDS);
     }
+
+    // ===== 内部数据类 =====
+    private record SnowOperation(BlockPos pos, OperationType type, int layers, long timestamp) {
+        enum OperationType {
+            PLACE_NEW, ADD_LAYER
+        }
+    }
+
+    private static class CacheEntry {
+        final Set<BlockPos> positions;
+        final long timestamp;
+        final long accessCount;
+
+        CacheEntry(Set<BlockPos> positions) {
+            this.positions = new HashSet<>(positions);
+            this.timestamp = System.currentTimeMillis();
+            this.accessCount = 1;
+        }
+
+        boolean isExpired() {
+            return System.currentTimeMillis() - timestamp > CACHE_TTL_MS;
+        }
+    }
+
+    private class DynamicParameters {
+        private volatile double poissonLambda;
+        private volatile double densityFactor;
+        private volatile double spatialVariance;
+        private volatile int maxProcessPerTick;
+
+        DynamicParameters(int roomSize) {
+            updateParameters(roomSize, 0, 0);
+        }
+
+        void updateParameters(int roomSize, double currentDensity, double avgProcessTime) {
+            // 动态调整泊松参数
+            double baseLambda = Math.log(roomSize + 1) * 0.5;
+            double densityAdjustment = Math.max(0.1, 1.0 - currentDensity * 0.5);
+            this.poissonLambda = Math.max(0.5, Math.min(8.0, baseLambda * densityAdjustment));
+
+            // 动态调整密度因子
+            this.densityFactor = Math.max(0.1, Math.min(2.0, 1.0 + Math.sin(snowCycles * 0.1) * 0.3));
+
+            // 动态调整空间方差
+            this.spatialVariance = Math.max(0.5, Math.min(2.0, 1.0 + currentDensity * 0.5));
+
+            // 动态调整每tick处理量
+            if (avgProcessTime > 50) { // 如果处理时间超过50ms
+                this.maxProcessPerTick = Math.max(10, (int) (this.maxProcessPerTick * 0.8));
+            } else if (avgProcessTime < 10) { // 如果处理时间小于10ms
+                this.maxProcessPerTick = Math.min(roomSize / 5, (int) (this.maxProcessPerTick * 1.2));
+            }
+        }
+    }
+
+    private class PerformanceMonitor {
+        private final AtomicLong totalOperations = new AtomicLong();
+        private final AtomicLong totalProcessTime = new AtomicLong();
+        private final Queue<Long> recentTimes = new ConcurrentLinkedQueue<>();
+
+        void recordOperation(long processTimeMs) {
+            totalOperations.incrementAndGet();
+            totalProcessTime.addAndGet(processTimeMs);
+            recentTimes.offer(processTimeMs);
+
+            // 保持最近100次记录
+            while (recentTimes.size() > 100) {
+                recentTimes.poll();
+            }
+        }
+
+        double getAverageProcessTime() {
+            if (recentTimes.isEmpty()) return 0;
+            return recentTimes.stream().mapToLong(Long::longValue).average().orElse(0);
+        }
+
+        double getCurrentDensity() {
+            if (roomBlocks.isEmpty()) return 0;
+            return (double) snowedPositions.size() / roomBlocks.size();
+        }
+    }
+
+    public record SnowStats(int totalSnowedBlocks, int snowCycles, Map<BlockPos, Integer> snowLayers,
+                            double averageProcessTime, double currentDensity, int activeSections,
+                            long cacheHitRate, long memoryUsage) {
+        public SnowStats(int totalSnowedBlocks, int snowCycles, Map<BlockPos, Integer> snowLayers,
+                         double averageProcessTime, double currentDensity, int activeSections,
+                         long cacheHitRate, long memoryUsage) {
+            this.totalSnowedBlocks = totalSnowedBlocks;
+            this.snowCycles = snowCycles;
+            this.snowLayers = new HashMap<>(snowLayers);
+            this.averageProcessTime = averageProcessTime;
+            this.currentDensity = currentDensity;
+            this.activeSections = activeSections;
+            this.cacheHitRate = cacheHitRate;
+            this.memoryUsage = memoryUsage;
+        }
+    }
+
+    // ===== 主要公共方法 =====
 
     public boolean performSnowingAsync(long currentTime) {
         if (!RoomDetectorConfig.isSnowEnabled()) {
@@ -290,6 +396,8 @@ public class SnowManager {
         }
     }
 
+    // ===== 核心算法实现 =====
+
     private void initializeSectionPartitions() {
         for (BlockPos pos : roomBlocks) {
             SectionPos sectionPos = SectionPos.of(pos);
@@ -300,8 +408,6 @@ public class SnowManager {
             activeSections.add(sectionPos);
         }
     }
-
-    // ===== 主要公共方法 =====
 
     private List<SnowOperation> calculateSnowOperationsAsync() {
         List<SnowOperation> operations = new ArrayList<>();
@@ -394,8 +500,6 @@ public class SnowManager {
         validPositionCache.put(sectionPos, new CacheEntry(positions));
         cacheAccessOrder.offer(sectionPos);
     }
-
-    // ===== 核心算法实现 =====
 
     private int calculateSectionSnowAmount(int validPositions) {
         if (validPositions == 0) return 0;
@@ -502,6 +606,8 @@ public class SnowManager {
         }
     }
 
+    // ===== 雪块操作方法 =====
+
     private boolean canPlaceSnow(BlockPos pos, BlockState currentState) {
         if (currentState.isAir()) {
             BlockPos belowPos = pos.below();
@@ -565,12 +671,12 @@ public class SnowManager {
         return false;
     }
 
+    // ===== 工具方法 =====
+
     private void invalidatePositionCache(BlockPos pos) {
         SectionPos sectionPos = SectionPos.of(pos);
         validPositionCache.remove(sectionPos);
     }
-
-    // ===== 雪块操作方法 =====
 
     private int generatePoisson(double lambda) {
         if (lambda <= 0) return 0;
@@ -629,106 +735,6 @@ public class SnowManager {
 
         } catch (Exception e) {
             ModernFurniture.LOGGER.warn("SnowManager维护任务失败", e);
-        }
-    }
-
-    // ===== 工具方法 =====
-
-    // ===== 内部数据类 =====
-    private record SnowOperation(BlockPos pos, OperationType type, int layers, long timestamp) {
-        enum OperationType {
-            PLACE_NEW, ADD_LAYER
-        }
-    }
-
-    private static class CacheEntry {
-        final Set<BlockPos> positions;
-        final long timestamp;
-        final long accessCount;
-
-        CacheEntry(Set<BlockPos> positions) {
-            this.positions = new HashSet<>(positions);
-            this.timestamp = System.currentTimeMillis();
-            this.accessCount = 1;
-        }
-
-        boolean isExpired() {
-            return System.currentTimeMillis() - timestamp > CACHE_TTL_MS;
-        }
-    }
-
-    public record SnowStats(int totalSnowedBlocks, int snowCycles, Map<BlockPos, Integer> snowLayers,
-                            double averageProcessTime, double currentDensity, int activeSections,
-                            long cacheHitRate, long memoryUsage) {
-        public SnowStats(int totalSnowedBlocks, int snowCycles, Map<BlockPos, Integer> snowLayers,
-                         double averageProcessTime, double currentDensity, int activeSections,
-                         long cacheHitRate, long memoryUsage) {
-            this.totalSnowedBlocks = totalSnowedBlocks;
-            this.snowCycles = snowCycles;
-            this.snowLayers = new HashMap<>(snowLayers);
-            this.averageProcessTime = averageProcessTime;
-            this.currentDensity = currentDensity;
-            this.activeSections = activeSections;
-            this.cacheHitRate = cacheHitRate;
-            this.memoryUsage = memoryUsage;
-        }
-    }
-
-    private class DynamicParameters {
-        private volatile double poissonLambda;
-        private volatile double densityFactor;
-        private volatile double spatialVariance;
-        private volatile int maxProcessPerTick;
-
-        DynamicParameters(int roomSize) {
-            updateParameters(roomSize, 0, 0);
-        }
-
-        void updateParameters(int roomSize, double currentDensity, double avgProcessTime) {
-            // 动态调整泊松参数
-            double baseLambda = Math.log(roomSize + 1) * 0.5;
-            double densityAdjustment = Math.max(0.1, 1.0 - currentDensity * 0.5);
-            this.poissonLambda = Math.max(0.5, Math.min(8.0, baseLambda * densityAdjustment));
-
-            // 动态调整密度因子
-            this.densityFactor = Math.max(0.1, Math.min(2.0, 1.0 + Math.sin(snowCycles * 0.1) * 0.3));
-
-            // 动态调整空间方差
-            this.spatialVariance = Math.max(0.5, Math.min(2.0, 1.0 + currentDensity * 0.5));
-
-            // 动态调整每tick处理量
-            if (avgProcessTime > 50) { // 如果处理时间超过50ms
-                this.maxProcessPerTick = Math.max(10, (int) (this.maxProcessPerTick * 0.8));
-            } else if (avgProcessTime < 10) { // 如果处理时间小于10ms
-                this.maxProcessPerTick = Math.min(roomSize / 5, (int) (this.maxProcessPerTick * 1.2));
-            }
-        }
-    }
-
-    private class PerformanceMonitor {
-        private final AtomicLong totalOperations = new AtomicLong();
-        private final AtomicLong totalProcessTime = new AtomicLong();
-        private final Queue<Long> recentTimes = new ConcurrentLinkedQueue<>();
-
-        void recordOperation(long processTimeMs) {
-            totalOperations.incrementAndGet();
-            totalProcessTime.addAndGet(processTimeMs);
-            recentTimes.offer(processTimeMs);
-
-            // 保持最近100次记录
-            while (recentTimes.size() > 100) {
-                recentTimes.poll();
-            }
-        }
-
-        double getAverageProcessTime() {
-            if (recentTimes.isEmpty()) return 0;
-            return recentTimes.stream().mapToLong(Long::longValue).average().orElse(0);
-        }
-
-        double getCurrentDensity() {
-            if (roomBlocks.isEmpty()) return 0;
-            return (double) snowedPositions.size() / roomBlocks.size();
         }
     }
 }

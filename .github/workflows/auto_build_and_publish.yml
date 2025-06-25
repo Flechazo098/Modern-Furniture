@@ -68,14 +68,14 @@ jobs:
 
       - name: Build with Gradle
         if: env.SKIP_BUILD == 'false'
-        run: ./gradlew shadowJar
+        run: ./gradlew build
 
       - name: Rename JAR file
         if: env.SKIP_BUILD == 'false'
         id: rename_file
         run: |
           TARGET_JAR="Modern-Furniture-${{ env.VERSION }}"
-          SOURCE_JAR=$(find run/plugins -name "*.jar" -print -quit)
+          SOURCE_JAR=$(find build/libs -name "*.jar" -print -quit)
           echo "FINAL_JAR_NAME=${TARGET_JAR}" >> $GITHUB_ENV
           mv "${SOURCE_JAR}" "${TARGET_JAR}.jar"
 

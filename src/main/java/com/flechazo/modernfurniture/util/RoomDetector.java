@@ -1,7 +1,7 @@
 package com.flechazo.modernfurniture.util;
 
 import com.flechazo.modernfurniture.ModernFurniture;
-import com.flechazo.modernfurniture.config.RoomDetectorConfig;
+import com.flechazo.modernfurniture.config.modules.RoomDetectionConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -72,7 +72,7 @@ import java.util.concurrent.CompletableFuture;
  * @version 0.0.1
  * @see BlockPos 使用Minecraft坐标系表示方块位置
  * @see Level 表示检测目标世界
- * @see RoomDetectorConfig 获取搜索参数配置
+ * @see RoomDetectionConfig 获取搜索参数配置
  */
 public class RoomDetector {
 
@@ -95,9 +95,9 @@ public class RoomDetector {
             return Collections.emptySet();
         }
 
-        final int maxRadius = RoomDetectorConfig.getMaxSearchDistance();
-        final int maxVolume = RoomDetectorConfig.getMaxRoomSize();
-        final long maxTime = RoomDetectorConfig.getMaxSearchTimeMs();
+        final int maxRadius = RoomDetectionConfig.maxSearchDistance;
+        final int maxVolume = RoomDetectionConfig.maxRoomSize;
+        final long maxTime = RoomDetectionConfig.maxSearchTimeMs;
 
         final int minX = startPos.getX() - maxRadius;
         final int maxX = startPos.getX() + maxRadius;

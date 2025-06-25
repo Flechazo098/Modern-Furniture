@@ -2,7 +2,7 @@ package com.flechazo.modernfurniture.block.entity;
 
 import com.flechazo.modernfurniture.ModernFurniture;
 import com.flechazo.modernfurniture.block.AirConditioningBlock;
-import com.flechazo.modernfurniture.config.RoomDetectorConfig;
+import com.flechazo.modernfurniture.config.modules.SnowGenerationConfig;
 import com.flechazo.modernfurniture.init.ModBlockEntities;
 import com.flechazo.modernfurniture.util.RoomDetector;
 import com.flechazo.modernfurniture.util.SnowManager;
@@ -111,7 +111,7 @@ public class AirConditioningBlockEntity extends BlockEntity implements GeoBlockE
                 this.isCooling = true;
                 this.coolingStartTime = this.level.getGameTime();
 
-                if (RoomDetectorConfig.isSnowEnabled()) {
+                if (SnowGenerationConfig.enableSnow) {
                     this.snowManager = new SnowManager((ServerLevel) this.level, detectedRoom);
                 }
 
@@ -183,7 +183,7 @@ public class AirConditioningBlockEntity extends BlockEntity implements GeoBlockE
                         if (this.level != null && !this.isRemoved()) {
                             this.roomBlocks = blocks;
 
-                            if (RoomDetectorConfig.isSnowEnabled() && blocks != null && !blocks.isEmpty()) {
+                            if (SnowGenerationConfig.enableSnow && blocks != null && !blocks.isEmpty()) {
                                 this.snowManager = new SnowManager((ServerLevel) this.level, blocks);
                             }
 
@@ -233,7 +233,7 @@ public class AirConditioningBlockEntity extends BlockEntity implements GeoBlockE
     }
 
     public void serverTick() {
-        if (this.level instanceof ServerLevel && this.isCooling && RoomDetectorConfig.isSnowEnabled()) {
+        if (this.level instanceof ServerLevel && this.isCooling && SnowGenerationConfig.enableSnow) {
             if (snowManager != null) {
                 long currentTime = this.level.getGameTime();
 

@@ -1,7 +1,7 @@
 package com.flechazo.modernfurniture.util;
 
 import com.flechazo.modernfurniture.ModernFurniture;
-import com.flechazo.modernfurniture.config.RoomDetectorConfig;
+import com.flechazo.modernfurniture.config.modules.SnowGenerationConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ServerLevel;
@@ -283,11 +283,11 @@ public class SnowManager {
     // ===== 主要公共方法 =====
 
     public boolean performSnowingAsync(long currentTime) {
-        if (!RoomDetectorConfig.isSnowEnabled()) {
+        if (!SnowGenerationConfig.enableSnow) {
             return false;
         }
 
-        long snowDelayTicks = RoomDetectorConfig.getSnowDelayTicks();
+        long snowDelayTicks = SnowGenerationConfig.snowDelayTicks;
         if (currentTime - lastSnowTime < snowDelayTicks) {
             return false;
         }
@@ -615,10 +615,10 @@ public class SnowManager {
 
             // 放置逻辑
             if (!belowState.isAir() && belowState.isSolidRender(level, belowPos)) {
-                double probability = RoomDetectorConfig.getGroundSnowProbability() * dynamicParams.densityFactor;
+                double probability = SnowGenerationConfig.groundSnowProbability * dynamicParams.densityFactor;
                 return random.nextFloat() < probability;
             } else {
-                double probability = RoomDetectorConfig.getSnowProbability() * dynamicParams.densityFactor * 0.5;
+                double probability = SnowGenerationConfig.snowProbability * dynamicParams.densityFactor * 0.5;
                 return random.nextFloat() < probability;
             }
         }

@@ -1,6 +1,6 @@
 package com.flechazo.modernfurniture;
 
-import com.flechazo.modernfurniture.config.RoomDetectorConfig;
+import com.flechazo.modernfurniture.config.ConfigManager;
 import com.flechazo.modernfurniture.init.ModBlockEntities;
 import com.flechazo.modernfurniture.init.ModBlockItem;
 import com.flechazo.modernfurniture.init.ModBlocks;
@@ -23,6 +23,6 @@ public class ModernFurniture {
         ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
         ModCreativeTab.CREATIVE_MODE_TABS.register(modEventBus);
 
-        RoomDetectorConfig.register(context);
+        ConfigManager.register(context);
     }
 }

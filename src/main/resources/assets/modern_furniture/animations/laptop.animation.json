@@ -51,6 +51,26 @@
                     }
                 }
             }
+        },
+        "laptop_opened": {
+            "loop": false,
+            "animation_length": 0.0,
+            "bones": {
+                "head": {
+                    "relative_to": {
+                        "rotation": "entity"
+                    },
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                -120,
+                                0,
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
         }
     },
     "geckolib_format_version": 2

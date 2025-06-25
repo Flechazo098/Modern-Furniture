@@ -21,12 +21,14 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class LaptopBlockEntity extends BlockEntity implements GeoBlockEntity {
     private static final RawAnimation OPEN_ANIMATION = RawAnimation.begin().thenPlayAndHold("laptop_open");
+    private static final RawAnimation OPENED_ANIMATION = RawAnimation.begin().thenPlayAndHold("laptop_opened");
     private static final RawAnimation CLOSE_ANIMATION = RawAnimation.begin().thenPlayAndHold("laptop_close");
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private boolean isAnimating = false;
     private String currentAnimation = "";
     private boolean isOpen = false;
     private boolean needsAnimationSync = false;
+    private boolean init = true;
 
     public LaptopBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.LAPTOP_BLOCK_ENTITY.get(), pos, state);
@@ -36,6 +38,7 @@ public class LaptopBlockEntity extends BlockEntity implements GeoBlockEntity {
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "laptop_controller", 0, this::predicate)
                 .triggerableAnim("open", OPEN_ANIMATION)
+                .triggerableAnim("opened", OPENED_ANIMATION)
                 .triggerableAnim("close", CLOSE_ANIMATION));
     }
 
@@ -132,8 +135,12 @@ public class LaptopBlockEntity extends BlockEntity implements GeoBlockEntity {
 
             if (this.isOpen) {
                 this.currentAnimation = "open";
-                this.triggerAnim("laptop_controller", "open");
+                if (this.init)
+                    this.triggerAnim("laptop_controller", "opened");
+                else
+                    this.triggerAnim("laptop_controller", "open");
             }
+            if (this.init) this.init = false;
         }
     }
 

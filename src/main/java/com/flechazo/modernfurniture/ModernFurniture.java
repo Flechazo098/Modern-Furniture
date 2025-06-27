@@ -5,6 +5,7 @@ import com.flechazo.modernfurniture.init.ModBlockEntities;
 import com.flechazo.modernfurniture.init.ModBlockItem;
 import com.flechazo.modernfurniture.init.ModBlocks;
 import com.flechazo.modernfurniture.init.ModCreativeTab;
+import com.flechazo.modernfurniture.network.NetworkHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
@@ -24,5 +25,6 @@ public class ModernFurniture {
         ModCreativeTab.CREATIVE_MODE_TABS.register(modEventBus);
 
         ConfigManager.register(context);
+        NetworkHandler.register(modEventBus);
     }
 }

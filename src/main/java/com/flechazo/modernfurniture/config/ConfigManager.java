@@ -19,9 +19,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class ConfigManager {
-    private static final Set<ConfigModule> configModules = new HashSet<>();
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final Map<ForgeConfigSpec.ConfigValue, Field> map = new HashMap<>();
+    public static final Map<ForgeConfigSpec.ConfigValue, Field> map = new HashMap<>();
 
     public static void register(FMLJavaModLoadingContext context) {
         context.registerConfig(ModConfig.Type.COMMON, init());
@@ -36,7 +35,7 @@ public class ConfigManager {
 
     private static ForgeConfigSpec init() {
         // first load all modules
-        configModules.addAll(ClassLoader.loadClasses("com.flechazo.modernfurniture.config.modules", ConfigModule.class));
+        final Set<ConfigModule> configModules = new HashSet<>(ClassLoader.loadClasses("com.flechazo.modernfurniture.config.modules", ConfigModule.class));
         final ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
         for (ConfigModule module : configModules) {
@@ -95,6 +94,21 @@ public class ConfigManager {
                     field.set(null, value.get());
             } catch (IllegalAccessException e) {
                 LOGGER.error("Error setting value to config field: {}", field.getName());
+            }
+        });
+    }
+
+    public static void syncValueFromServer(Map<String, Object> serverConfig) {
+        map.forEach((value, field) -> {
+            field.setAccessible(true);
+            try {
+                if (value != null) {
+                    Object newValue = serverConfig.get(field.getName());
+                    if (newValue == null) newValue = value.getDefault();
+                    field.set(null, newValue);
+                }
+            } catch (IllegalAccessException e) {
+                LOGGER.error("Error sync config field: {}", field.getName());
             }
         });
     }

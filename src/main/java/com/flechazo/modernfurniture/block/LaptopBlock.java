@@ -1,6 +1,7 @@
 package com.flechazo.modernfurniture.block;
 
 import com.flechazo.modernfurniture.block.entity.LaptopBlockEntity;
+import com.flechazo.modernfurniture.util.VoxelShapeUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -92,46 +93,10 @@ public class LaptopBlock extends Block implements EntityBlock {
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         boolean isOpen = state.getValue(OPEN);
         Direction facing = state.getValue(FACING);
-
+        
         VoxelShape shape = isOpen ? OPEN_SHAPE : CLOSED_SHAPE;
-
-        return rotateShape(shape, facing);
-    }
-
-    private VoxelShape rotateShape(VoxelShape shape, Direction facing) {
-        return switch (facing) {
-            case SOUTH -> {
-                VoxelShape[] rotatedShapes = shape.toAabbs().stream()
-                        .map(aabb -> Shapes.create(
-                                1 - aabb.maxX, aabb.minY, 1 - aabb.maxZ,
-                                1 - aabb.minX, aabb.maxY, 1 - aabb.minZ
-                        ))
-                        .toArray(VoxelShape[]::new);
-                yield rotatedShapes.length > 0 ?
-                        Arrays.stream(rotatedShapes).reduce(Shapes.empty(), Shapes::or) : Shapes.empty();
-            }
-            case WEST -> {
-                VoxelShape[] rotatedShapes = shape.toAabbs().stream()
-                        .map(aabb -> Shapes.create(
-                                aabb.minZ, aabb.minY, 1 - aabb.maxX,
-                                aabb.maxZ, aabb.maxY, 1 - aabb.minX
-                        ))
-                        .toArray(VoxelShape[]::new);
-                yield rotatedShapes.length > 0 ?
-                        Arrays.stream(rotatedShapes).reduce(Shapes.empty(), Shapes::or) : Shapes.empty();
-            }
-            case EAST -> {
-                VoxelShape[] rotatedShapes = shape.toAabbs().stream()
-                        .map(aabb -> Shapes.create(
-                                1 - aabb.maxZ, aabb.minY, aabb.minX,
-                                1 - aabb.minZ, aabb.maxY, aabb.maxX
-                        ))
-                        .toArray(VoxelShape[]::new);
-                yield rotatedShapes.length > 0 ?
-                        Arrays.stream(rotatedShapes).reduce(Shapes.empty(), Shapes::or) : Shapes.empty();
-            }
-            default -> shape;
-        };
+        
+        return VoxelShapeUtils.rotateShape(shape, facing);
     }
 
     @Override

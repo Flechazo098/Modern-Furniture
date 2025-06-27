@@ -1,6 +1,7 @@
 package com.flechazo.modernfurniture.block;
 
 import com.flechazo.modernfurniture.block.entity.AirConditioningBlockEntity;
+import com.flechazo.modernfurniture.util.VoxelShapeUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -95,13 +96,11 @@ public class AirConditioningBlock extends Block implements EntityBlock {
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         if (state.getValue(OPEN)) {
-            // 发射霜降粒子效果
             Direction facing = state.getValue(FACING);
             double x = pos.getX() + 0.5;
             double y = pos.getY() + 0.3;
             double z = pos.getZ() + 0.5;
 
-            // 根据朝向调整粒子发射位置
             switch (facing) {
                 case NORTH -> z -= 0.4;
                 case SOUTH -> z += 0.4;
@@ -109,7 +108,6 @@ public class AirConditioningBlock extends Block implements EntityBlock {
                 case EAST -> x += 0.4;
             }
 
-            // 发射多个粒子
             for (int i = 0; i < 3; i++) {
                 double offsetX = (random.nextDouble() - 0.5) * 0.3;
                 double offsetY = (random.nextDouble() - 0.5) * 0.2;
@@ -131,7 +129,6 @@ public class AirConditioningBlock extends Block implements EntityBlock {
                 }
             };
         } else {
-            // 服务端ticker用于处理制冷逻辑
             return (lvl, pos, st, be) -> {
                 if (be instanceof AirConditioningBlockEntity acEntity) {
                     acEntity.serverTick();
@@ -148,43 +145,7 @@ public class AirConditioningBlock extends Block implements EntityBlock {
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         Direction facing = state.getValue(FACING);
-        return rotateShape(BASE_SHAPE, facing);
+        return VoxelShapeUtils.rotateShape(BASE_SHAPE, facing);
     }
 
-
-    private VoxelShape rotateShape(VoxelShape shape, Direction facing) {
-        return switch (facing) {
-            case SOUTH -> {
-                VoxelShape[] rotatedShapes = shape.toAabbs().stream()
-                        .map(aabb -> Shapes.create(
-                                1 - aabb.maxX, aabb.minY, 1 - aabb.maxZ,
-                                1 - aabb.minX, aabb.maxY, 1 - aabb.minZ
-                        ))
-                        .toArray(VoxelShape[]::new);
-                yield rotatedShapes.length > 0 ?
-                        Arrays.stream(rotatedShapes).reduce(Shapes.empty(), Shapes::or) : Shapes.empty();
-            }
-            case WEST -> {
-                VoxelShape[] rotatedShapes = shape.toAabbs().stream()
-                        .map(aabb -> Shapes.create(
-                                aabb.minZ, aabb.minY, 1 - aabb.maxX,
-                                aabb.maxZ, aabb.maxY, 1 - aabb.minX
-                        ))
-                        .toArray(VoxelShape[]::new);
-                yield rotatedShapes.length > 0 ?
-                        Arrays.stream(rotatedShapes).reduce(Shapes.empty(), Shapes::or) : Shapes.empty();
-            }
-            case EAST -> {
-                VoxelShape[] rotatedShapes = shape.toAabbs().stream()
-                        .map(aabb -> Shapes.create(
-                                1 - aabb.maxZ, aabb.minY, aabb.minX,
-                                1 - aabb.minZ, aabb.maxY, aabb.maxX
-                        ))
-                        .toArray(VoxelShape[]::new);
-                yield rotatedShapes.length > 0 ?
-                        Arrays.stream(rotatedShapes).reduce(Shapes.empty(), Shapes::or) : Shapes.empty();
-            }
-            default -> shape;
-        };
-    }
 }

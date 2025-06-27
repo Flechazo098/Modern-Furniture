@@ -79,19 +79,19 @@ public class RoomDetector {
     /**
      * 执行封闭空间检测
      *
-     * @param world    目标世界对象
+     * @param level    目标世界对象
      * @param startPos 检测起始坐标
      * @return 包含所有可通过方块的集合，若失败返回空集合
      * @implNote 典型处理时间与房间体积成正比，10,000方块约需50-100ms
      */
-    public static Set<BlockPos> findRoom(Level world, BlockPos startPos) {
+    public static Set<BlockPos> findRoom(Level level, BlockPos startPos) {
         long startTime = System.currentTimeMillis();
 
         Set<BlockPos> visited = new HashSet<>(8192);
         ArrayDeque<BlockPos> queue = new ArrayDeque<>(1024);
         Set<BlockPos> roomBlocks = new HashSet<>(8192);
 
-        if (!isPassable(world, startPos)) {
+        if (!isPassable(level, startPos)) {
             return Collections.emptySet();
         }
 
@@ -101,8 +101,8 @@ public class RoomDetector {
 
         final int minX = startPos.getX() - maxRadius;
         final int maxX = startPos.getX() + maxRadius;
-        final int minY = Math.max(world.getMinBuildHeight(), startPos.getY() - maxRadius);
-        final int maxY = Math.min(world.getMaxBuildHeight(), startPos.getY() + maxRadius);
+        final int minY = Math.max(level.getMinBuildHeight(), startPos.getY() - maxRadius);
+        final int maxY = Math.min(level.getMaxBuildHeight(), startPos.getY() + maxRadius);
         final int minZ = startPos.getZ() - maxRadius;
         final int maxZ = startPos.getZ() + maxRadius;
 
@@ -129,12 +129,12 @@ public class RoomDetector {
             int y = current.getY();
             int z = current.getZ();
 
-            checkAndAdd(world, new BlockPos(x, y + 1, z), visited, queue, roomBlocks, minX, maxX, minY, maxY, minZ, maxZ);
-            checkAndAdd(world, new BlockPos(x, y - 1, z), visited, queue, roomBlocks, minX, maxX, minY, maxY, minZ, maxZ);
-            checkAndAdd(world, new BlockPos(x + 1, y, z), visited, queue, roomBlocks, minX, maxX, minY, maxY, minZ, maxZ);
-            checkAndAdd(world, new BlockPos(x - 1, y, z), visited, queue, roomBlocks, minX, maxX, minY, maxY, minZ, maxZ);
-            checkAndAdd(world, new BlockPos(x, y, z + 1), visited, queue, roomBlocks, minX, maxX, minY, maxY, minZ, maxZ);
-            checkAndAdd(world, new BlockPos(x, y, z - 1), visited, queue, roomBlocks, minX, maxX, minY, maxY, minZ, maxZ);
+            checkAndAdd(level, new BlockPos(x, y + 1, z), visited, queue, roomBlocks, minX, maxX, minY, maxY, minZ, maxZ);
+            checkAndAdd(level, new BlockPos(x, y - 1, z), visited, queue, roomBlocks, minX, maxX, minY, maxY, minZ, maxZ);
+            checkAndAdd(level, new BlockPos(x + 1, y, z), visited, queue, roomBlocks, minX, maxX, minY, maxY, minZ, maxZ);
+            checkAndAdd(level, new BlockPos(x - 1, y, z), visited, queue, roomBlocks, minX, maxX, minY, maxY, minZ, maxZ);
+            checkAndAdd(level, new BlockPos(x, y, z + 1), visited, queue, roomBlocks, minX, maxX, minY, maxY, minZ, maxZ);
+            checkAndAdd(level, new BlockPos(x, y, z - 1), visited, queue, roomBlocks, minX, maxX, minY, maxY, minZ, maxZ);
         }
 
         long elapsed = System.currentTimeMillis() - startTime;
@@ -146,7 +146,7 @@ public class RoomDetector {
     /**
      * 检查并添加相邻方块到队列
      */
-    private static void checkAndAdd(Level world, BlockPos pos, Set<BlockPos> visited,
+    private static void checkAndAdd(Level level, BlockPos pos, Set<BlockPos> visited,
                                     ArrayDeque<BlockPos> queue, Set<BlockPos> roomBlocks,
                                     int minX, int maxX, int minY, int maxY, int minZ, int maxZ) {
         int x = pos.getX();
@@ -158,11 +158,11 @@ public class RoomDetector {
         }
 
         if (visited.add(pos)) {
-            if (!world.hasChunkAt(pos)) {
+            if (!level.hasChunkAt(pos)) {
                 return;
             }
 
-            if (isPassable(world, pos)) {
+            if (isPassable(level, pos)) {
                 queue.offer(pos);
                 roomBlocks.add(pos);
             }
@@ -188,13 +188,13 @@ public class RoomDetector {
     /**
      * 异步执行房间检测
      *
-     * @param world    目标世界对象
+     * @param level    目标世界对象
      * @param startPos 检测起始坐标
      * @return 包含搜索结果的CompletableFuture
      * @apiNote 建议配合thenAcceptAsync等异步方法使用
      * @implSpec 实际使用ForkJoinPool.commonPool()线程池
      */
-    public static CompletableFuture<Set<BlockPos>> findRoomAsync(Level world, BlockPos startPos) {
-        return CompletableFuture.supplyAsync(() -> findRoom(world, startPos));
+    public static CompletableFuture<Set<BlockPos>> findRoomAsync(Level level, BlockPos startPos) {
+        return CompletableFuture.supplyAsync(() -> findRoom(level, startPos));
     }
 }

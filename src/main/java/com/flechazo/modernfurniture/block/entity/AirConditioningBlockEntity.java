@@ -175,11 +175,8 @@ public class AirConditioningBlockEntity extends AbstractAnimatableBlockEntity {
     private void logPerformanceStats(long currentTime) {
         if (currentTime - lastPerformanceLog > PERFORMANCE_LOG_INTERVAL) {
             lastPerformanceLog = currentTime;
-
-            if (snowManager != null) {
-                SnowStats stats = snowManager.getSnowStats();
+                SnowStats stats = getSnowStats();
                 ModernFurniture.LOGGER.debug("降雪性能统计: {}", stats);
-            }
         }
     }
 

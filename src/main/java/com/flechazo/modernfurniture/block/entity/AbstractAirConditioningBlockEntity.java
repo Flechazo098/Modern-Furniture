@@ -1,9 +1,7 @@
 package com.flechazo.modernfurniture.block.entity;
 
 import com.flechazo.modernfurniture.ModernFurniture;
-import com.flechazo.modernfurniture.block.AirConditioningBlock;
 import com.flechazo.modernfurniture.config.modules.SnowGenerationConfig;
-import com.flechazo.modernfurniture.init.ModBlockEntities;
 import com.flechazo.modernfurniture.util.RoomDetector;
 import com.flechazo.modernfurniture.util.snow.SnowManager;
 import com.flechazo.modernfurniture.util.snow.SnowStats;
@@ -11,18 +9,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import software.bernie.geckolib.core.animation.RawAnimation;
 
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-public class AirConditioningBlockEntity extends AbstractAnimatableBlockEntity {
+public abstract class AbstractAirConditioningBlockEntity extends AbstractAnimatableBlockEntity {
     private static final long PERFORMANCE_LOG_INTERVAL = 60000;
-    private static final RawAnimation OPEN_ANIMATION = RawAnimation.begin().thenPlayAndHold("open");
-    private static final RawAnimation OPENED_ANIMATION = RawAnimation.begin().thenPlayAndHold("opened");
-    private static final RawAnimation CLOSE_ANIMATION = RawAnimation.begin().thenPlayAndHold("close");
 
     private CompletableFuture<Void> roomDetectionFuture;
     private boolean isCooling = false;
@@ -31,45 +25,22 @@ public class AirConditioningBlockEntity extends AbstractAnimatableBlockEntity {
     private SnowManager snowManager = null;
     private long lastPerformanceLog = 0;
 
-    public AirConditioningBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.AIR_CONDITIONING_BLOCK_ENTITY.get(), pos, state);
+    public AbstractAirConditioningBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
     }
 
-    @Override
-    protected RawAnimation getOpenAnimation() {
-        return OPEN_ANIMATION;
-    }
+    protected abstract Direction getAirConditioningFacing();
 
-    @Override
-    protected RawAnimation getOpenedAnimation() {
-        return OPENED_ANIMATION;
-    }
+    protected abstract BlockPos getRoomDetectionStartPos();
 
-    @Override
-    protected RawAnimation getCloseAnimation() {
-        return CLOSE_ANIMATION;
-    }
+    protected abstract BlockPos getParticleEffectPos();
 
-    @Override
-    protected String getControllerName() {
-        return "ac_controller";
-    }
-
-    @Override
-    protected BooleanProperty getOpenProperty() {
-        return AirConditioningBlock.OPEN;
-    }
-
+    /**
+     * 开始制冷
+     */
     public void startCooling() {
         if (this.level instanceof ServerLevel) {
-            BlockState state = this.level.getBlockState(this.worldPosition);
-            Direction facing = state.getValue(AirConditioningBlock.FACING);
-
-            BlockPos startPos = this.worldPosition.relative(facing);
-            if (!RoomDetector.isPassable(this.level, startPos)) {
-                startPos = this.worldPosition.above();
-            }
-
+            BlockPos startPos = getRoomDetectionStartPos();
             Set<BlockPos> detectedRoom = RoomDetector.findRoom(this.level, startPos);
 
             if (detectedRoom != null && !detectedRoom.isEmpty()) {
@@ -86,6 +57,9 @@ public class AirConditioningBlockEntity extends AbstractAnimatableBlockEntity {
         }
     }
 
+    /**
+     * 停止制冷
+     */
     public void stopCooling() {
         isCooling = false;
         coolingStartTime = 0;
@@ -153,6 +127,9 @@ public class AirConditioningBlockEntity extends AbstractAnimatableBlockEntity {
         }
     }
 
+    /**
+     * 服务端tick处理
+     */
     public void serverTick() {
         if (this.level instanceof ServerLevel && this.isCooling && SnowGenerationConfig.enableSnow) {
             if (snowManager != null) {
@@ -175,8 +152,8 @@ public class AirConditioningBlockEntity extends AbstractAnimatableBlockEntity {
     private void logPerformanceStats(long currentTime) {
         if (currentTime - lastPerformanceLog > PERFORMANCE_LOG_INTERVAL) {
             lastPerformanceLog = currentTime;
-                SnowStats stats = getSnowStats();
-                ModernFurniture.LOGGER.debug("降雪性能统计: {}", stats);
+            SnowStats stats = getSnowStats();
+            ModernFurniture.LOGGER.debug("降雪性能统计: {}", stats);
         }
     }
 
@@ -190,5 +167,13 @@ public class AirConditioningBlockEntity extends AbstractAnimatableBlockEntity {
             snowManager.shutdown();
             snowManager = new SnowManager((ServerLevel) this.level, roomBlocks);
         }
+    }
+
+    public boolean isCooling() {
+        return isCooling;
+    }
+
+    public Set<BlockPos> getRoomBlocks() {
+        return roomBlocks;
     }
 }

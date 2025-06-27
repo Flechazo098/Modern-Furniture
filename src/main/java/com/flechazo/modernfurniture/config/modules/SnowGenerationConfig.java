@@ -9,7 +9,7 @@ public class SnowGenerationConfig implements ConfigModule {
     public static boolean enableSnow = true;
     @ConfigInfo(name = "snowDelayTicks", comment = "积雪生成周期间隔（20刻=1秒）")
     @RangeFlag(min = "100", max = "72000")
-    public static long snowDelayTicks = 6000;
+    public static long snowDelayTicks = 100;
     @ConfigInfo(name = "snowProbability", comment = "空中方块生成积雪的概率（0=从不，1=总是）应该没人会喜欢这个")
     @RangeFlag(min = "0", max = "1")
     public static double snowProbability = 0;

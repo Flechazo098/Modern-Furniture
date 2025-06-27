@@ -181,8 +181,18 @@ public class SnowManager {
             return false;
         }
 
+        // 检查最大降雪周期限制
+        if (SnowGenerationConfig.maxSnowCycles >= 0 && snowCycles >= SnowGenerationConfig.maxSnowCycles) {
+            return false;
+        }
+
         long snowDelayTicks = SnowGenerationConfig.snowDelayTicks;
         if (currentTime - lastSnowTime < snowDelayTicks) {
+            return false;
+        }
+
+        // 检查积雪覆盖率限制
+        if (hasReachedCoverageLimit()) {
             return false;
         }
 
@@ -264,6 +274,9 @@ public class SnowManager {
         long memoryUsage = memoryBean.getHeapMemoryUsage().getUsed();
         long cacheHitRate = !validPositionCache.isEmpty() ?
                 validPositionCache.values().stream().mapToLong(e -> e.accessCount).sum() / validPositionCache.size() : 0;
+        double currentCoverage = calculateCurrentCoverage();
+        boolean cycleLimit = SnowGenerationConfig.maxSnowCycles >= 0 && snowCycles >= SnowGenerationConfig.maxSnowCycles;
+        boolean coverageLimit = hasReachedCoverageLimit();
 
         return new SnowStats(
                 snowedPositions.size(),
@@ -273,7 +286,10 @@ public class SnowManager {
                 perfMonitor.getCurrentDensity(),
                 activeSections.size(),
                 cacheHitRate,
-                memoryUsage
+                memoryUsage,
+                currentCoverage,
+                cycleLimit,
+                coverageLimit
         );
     }
 
@@ -331,6 +347,46 @@ public class SnowManager {
         }
 
         return operations;
+    }
+
+    private boolean hasReachedCoverageLimit() {
+        if (SnowGenerationConfig.snowCoverageRatio <= 0) {
+            return false; // 无限制
+        }
+
+        double currentCoverage = calculateCurrentCoverage();
+        return currentCoverage >= SnowGenerationConfig.snowCoverageRatio;
+    }
+
+    private double calculateCurrentCoverage() {
+        if (roomBlocks.isEmpty()) {
+            return 0.0;
+        }
+
+        // 计算可以放置积雪的有效位置数量
+        int validPositions = 0;
+        int snowedValidPositions = 0;
+
+        for (BlockPos pos : roomBlocks) {
+            BlockState state = level.getBlockState(pos);
+
+            // 检查是否是有效的积雪位置（地面或空气）
+            if (state.isAir()) {
+                BlockPos belowPos = pos.below();
+                BlockState belowState = level.getBlockState(belowPos);
+                if (!belowState.isAir() && belowState.isSolidRender(level, belowPos)) {
+                    validPositions++;
+                    if (snowedPositions.contains(pos)) {
+                        snowedValidPositions++;
+                    }
+                }
+            } else if (state.getBlock() == Blocks.SNOW) {
+                validPositions++;
+                snowedValidPositions++;
+            }
+        }
+
+        return validPositions > 0 ? (double) snowedValidPositions / validPositions : 0.0;
     }
 
     private List<SectionPos> selectSectionsForProcessing() {
@@ -403,12 +459,27 @@ public class SnowManager {
         // 使用动态泊松参数
         int poissonValue = generatePoisson(dynamicParams.poissonLambda);
 
-        // 基于空间方差调整
-        double variance = dynamicParams.spatialVariance;
-        int baseAmount = Math.max(1, (int) (validPositions * 0.1 * variance));
+        // 基于当前覆盖率调整降雪强度
+        double currentCoverage = calculateCurrentCoverage();
+        int baseAmount = getBaseAmount(validPositions, currentCoverage);
         int maxAmount = Math.max(1, validPositions / 3);
 
         return Math.min(maxAmount, baseAmount + poissonValue);
+    }
+
+    private int getBaseAmount(int validPositions, double currentCoverage) {
+        double targetCoverage = SnowGenerationConfig.snowCoverageRatio;
+
+        // 如果接近目标覆盖率，减少降雪强度
+        double coverageAdjustment = 1.0;
+        if (targetCoverage > 0) {
+            double remainingCoverage = Math.max(0, targetCoverage - currentCoverage);
+            coverageAdjustment = Math.min(1.0, remainingCoverage / 0.1); // 在最后10%时逐渐减少
+        }
+
+        // 基于空间方差调整
+        double variance = dynamicParams.spatialVariance;
+        return Math.max(1, (int) (validPositions * 0.1 * variance * coverageAdjustment));
     }
 
     private List<SnowOperation> generateSectionOperations(Set<BlockPos> positions,
@@ -657,22 +728,43 @@ public class SnowManager {
         }
     }
 
-    public record SnowStats(int totalSnowedBlocks, int snowCycles, Map<BlockPos, Integer> snowLayers,
-                            double averageProcessTime, double currentDensity, int activeSections,
-                            long cacheHitRate, long memoryUsage) {
-        public SnowStats(int totalSnowedBlocks, int snowCycles, Map<BlockPos, Integer> snowLayers,
-                         double averageProcessTime, double currentDensity, int activeSections,
-                         long cacheHitRate, long memoryUsage) {
-            this.totalSnowedBlocks = totalSnowedBlocks;
-            this.snowCycles = snowCycles;
-            this.snowLayers = new HashMap<>(snowLayers);
-            this.averageProcessTime = averageProcessTime;
-            this.currentDensity = currentDensity;
-            this.activeSections = activeSections;
-            this.cacheHitRate = cacheHitRate;
-            this.memoryUsage = memoryUsage;
+    /**
+     * @param currentCoverage      新增
+     * @param reachedCycleLimit    新增
+     * @param reachedCoverageLimit 新增
+     */
+    public record SnowStats(int totalSnowBlocks, int snowCycles, Map<BlockPos, Integer> snowLayers,
+                            double averageProcessTime, double currentDensity, int activeSections, long cacheHitRate,
+                            long memoryUsage, double currentCoverage, boolean reachedCycleLimit,
+                            boolean reachedCoverageLimit) {
+            public SnowStats(int totalSnowBlocks, int snowCycles, Map<BlockPos, Integer> snowLayers,
+                             double averageProcessTime, double currentDensity, int activeSections,
+                             long cacheHitRate, long memoryUsage, double currentCoverage,
+                             boolean reachedCycleLimit, boolean reachedCoverageLimit) {
+                this.totalSnowBlocks = totalSnowBlocks;
+                this.snowCycles = snowCycles;
+                this.snowLayers = new HashMap<>(snowLayers);
+                this.averageProcessTime = averageProcessTime;
+                this.currentDensity = currentDensity;
+                this.activeSections = activeSections;
+                this.cacheHitRate = cacheHitRate;
+                this.memoryUsage = memoryUsage;
+                this.currentCoverage = currentCoverage;
+                this.reachedCycleLimit = reachedCycleLimit;
+                this.reachedCoverageLimit = reachedCoverageLimit;
+            }
+
+            @Override
+            public String toString() {
+                return String.format(
+                        "SnowStats{blocks=%d, cycles=%d, coverage=%.2f%%, avgTime=%.2fms, sections=%d, " +
+                                "cacheHit=%d, memory=%dMB, cycleLimit=%s, coverageLimit=%s}",
+                        totalSnowBlocks, snowCycles, currentCoverage * 100, averageProcessTime,
+                        activeSections, cacheHitRate, memoryUsage / (1024 * 1024),
+                        reachedCycleLimit, reachedCoverageLimit
+                );
+            }
         }
-    }
 
     private class DynamicParameters {
         private volatile double poissonLambda;

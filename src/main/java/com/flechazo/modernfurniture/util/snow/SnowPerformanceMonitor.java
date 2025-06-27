@@ -11,9 +11,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 积雪性能监控器
- * 
+ *
  * <p>监控积雪系统的性能指标，包括处理时间、内存使用、操作统计等。</p>
- * 
+ *
  * <h2>主要功能</h2>
  * <ul>
  *   <li>操作性能统计</li>
@@ -23,13 +23,13 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class SnowPerformanceMonitor {
     private static final long MEMORY_CHECK_INTERVAL = 10000; // 10秒检查一次内存
-    
+
     private final AtomicLong totalOperations = new AtomicLong();
     private final AtomicLong totalProcessTime = new AtomicLong();
     private final Queue<Long> recentTimes = new ConcurrentLinkedQueue<>();
     private final MemoryMXBean memoryBean;
     private final ScheduledExecutorService scheduledExecutor;
-    
+
     private long lastMemoryCheck = 0;
 
     /**
@@ -42,14 +42,14 @@ public class SnowPerformanceMonitor {
             t.setDaemon(true);
             return t;
         });
-        
+
         // 启动定期清理任务
         scheduledExecutor.scheduleAtFixedRate(this::performMaintenance, 30, 30, TimeUnit.SECONDS);
     }
 
     /**
      * 记录操作性能
-     * 
+     *
      * @param processTimeMs 处理时间（毫秒）
      */
     public void recordOperation(long processTimeMs) {
@@ -65,7 +65,7 @@ public class SnowPerformanceMonitor {
 
     /**
      * 获取平均处理时间
-     * 
+     *
      * @return 平均处理时间（毫秒）
      */
     public double getAverageProcessTime() {
@@ -77,7 +77,7 @@ public class SnowPerformanceMonitor {
 
     /**
      * 获取当前密度
-     * 
+     *
      * @param roomSize 房间大小
      * @return 当前密度
      */
@@ -90,7 +90,7 @@ public class SnowPerformanceMonitor {
 
     /**
      * 获取内存使用量
-     * 
+     *
      * @return 内存使用量（字节）
      */
     public long getMemoryUsage() {
@@ -99,7 +99,7 @@ public class SnowPerformanceMonitor {
 
     /**
      * 检查是否应该因内存压力跳过处理
-     * 
+     *
      * @return 是否应该跳过
      */
     public boolean shouldSkipDueToMemory() {

@@ -13,9 +13,9 @@ import java.util.concurrent.*;
 
 /**
  * 积雪缓存管理器
- * 
+ *
  * <p>实现智能缓存机制，包括LRU淘汰、TTL过期、事件驱动失效等功能。</p>
- * 
+ *
  * <h2>主要功能</h2>
  * <ul>
  *   <li>有效位置缓存管理</li>
@@ -29,7 +29,7 @@ public class SnowCacheManager {
     private static final long CACHE_TTL_MS = 30000; // 30秒TTL
     private static final long CACHE_INVALIDATION_BATCH_DELAY = 100; // 100ms批量失效延迟
     private static final int MAX_INVALIDATION_BATCH_SIZE = 20; // 最大批量失效数量
-    
+
     private final Map<SectionPos, CacheEntry> validPositionCache;
     private final Queue<SectionPos> cacheAccessOrder;
     private final Set<SectionPos> pendingInvalidations;
@@ -45,32 +45,32 @@ public class SnowCacheManager {
         this.cacheAccessOrder = new ConcurrentLinkedQueue<>();
         this.pendingInvalidations = ConcurrentHashMap.newKeySet();
         this.sectionChangeFrequency = new ConcurrentHashMap<>();
-        
+
         this.scheduledExecutor = Executors.newScheduledThreadPool(1, r -> {
             Thread t = new Thread(r, "SnowCache-Scheduler");
             t.setDaemon(true);
             return t;
         });
-        
+
         // 启动批量失效任务
         this.batchInvalidationTask = scheduledExecutor.scheduleAtFixedRate(
-            this::processBatchInvalidation,
-            CACHE_INVALIDATION_BATCH_DELAY,
-            CACHE_INVALIDATION_BATCH_DELAY,
-            TimeUnit.MILLISECONDS
+                this::processBatchInvalidation,
+                CACHE_INVALIDATION_BATCH_DELAY,
+                CACHE_INVALIDATION_BATCH_DELAY,
+                TimeUnit.MILLISECONDS
         );
     }
 
     /**
      * 获取分区的有效位置（带缓存）
-     * 
-     * @param sectionPos 分区位置
-     * @param sectionBlocks 分区方块集合
-     * @param level 服务器世界
+     *
+     * @param sectionPos           分区位置
+     * @param sectionBlocks        分区方块集合
+     * @param level                服务器世界
      * @param snowPlacementChecker 积雪放置检查器
      * @return 有效位置集合
      */
-    public Set<BlockPos> getSectionValidPositions(SectionPos sectionPos, 
+    public Set<BlockPos> getSectionValidPositions(SectionPos sectionPos,
                                                   Set<BlockPos> sectionBlocks,
                                                   ServerLevel level,
                                                   SnowPlacementChecker snowPlacementChecker) {
@@ -83,22 +83,22 @@ public class SnowCacheManager {
 
         // 计算有效位置
         Set<BlockPos> validPositions = calculateValidPositions(sectionPos, sectionBlocks, level, snowPlacementChecker);
-        
+
         // 更新缓存
         updateCache(sectionPos, validPositions);
-        
+
         return validPositions;
     }
 
     /**
      * 计划缓存失效
-     * 
-     * @param pos 位置
+     *
+     * @param pos    位置
      * @param reason 失效原因
      */
     public void scheduleInvalidation(BlockPos pos, String reason) {
         SectionPos sectionPos = SectionPos.of(pos);
-        
+
         // 更新变化频率统计
         long currentTime = System.currentTimeMillis();
         sectionChangeFrequency.merge(sectionPos, currentTime, (oldTime, newTime) -> {
@@ -109,16 +109,16 @@ public class SnowCacheManager {
             }
             return newTime;
         });
-        
+
         // 添加到待处理队列
         pendingInvalidations.add(sectionPos);
-        
+
         ModernFurniture.LOGGER.debug("计划缓存失效: {} 原因: {}", sectionPos, reason);
     }
 
     /**
      * 获取缓存命中率
-     * 
+     *
      * @return 命中率
      */
     public long getCacheHitRate() {
@@ -126,8 +126,8 @@ public class SnowCacheManager {
             return 0;
         }
         return validPositionCache.values().stream()
-            .mapToLong(e -> e.accessCount)
-            .sum() / validPositionCache.size();
+                .mapToLong(e -> e.accessCount)
+                .sum() / validPositionCache.size();
     }
 
     /**
@@ -147,7 +147,7 @@ public class SnowCacheManager {
         if (batchInvalidationTask != null) {
             batchInvalidationTask.cancel(false);
         }
-        
+
         scheduledExecutor.shutdown();
         try {
             if (!scheduledExecutor.awaitTermination(5, TimeUnit.SECONDS)) {

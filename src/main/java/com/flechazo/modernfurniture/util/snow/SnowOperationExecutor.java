@@ -12,9 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 积雪操作执行器
- * 
+ *
  * <p>负责执行具体的积雪放置、移除、层级管理等操作。</p>
- * 
+ *
  * <h2>主要功能</h2>
  * <ul>
  *   <li>积雪方块的放置和移除</li>
@@ -29,7 +29,7 @@ public class SnowOperationExecutor {
 
     /**
      * 构造操作执行器
-     * 
+     *
      * @param level 服务器世界
      */
     public SnowOperationExecutor(ServerLevel level) {
@@ -40,7 +40,7 @@ public class SnowOperationExecutor {
 
     /**
      * 执行积雪操作列表
-     * 
+     *
      * @param operations 操作列表
      */
     public void executeOperations(List<SnowOperation> operations) {
@@ -76,14 +76,14 @@ public class SnowOperationExecutor {
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
             }
         }
-        
+
         snowedPositions.clear();
         snowLayers.clear();
     }
 
     /**
      * 获取积雪位置集合
-     * 
+     *
      * @return 积雪位置集合
      */
     public Set<BlockPos> getSnowedPositions() {
@@ -92,7 +92,7 @@ public class SnowOperationExecutor {
 
     /**
      * 获取积雪位置数量
-     * 
+     *
      * @return 积雪位置数量
      */
     public int getSnowedPositionsCount() {
@@ -101,7 +101,7 @@ public class SnowOperationExecutor {
 
     /**
      * 获取积雪层级映射
-     * 
+     *
      * @return 积雪层级映射
      */
     public Map<BlockPos, Integer> getSnowLayers() {
@@ -110,7 +110,7 @@ public class SnowOperationExecutor {
 
     /**
      * 放置初始积雪
-     * 
+     *
      * @param pos 位置
      * @return 是否成功放置
      */
@@ -126,7 +126,7 @@ public class SnowOperationExecutor {
 
     /**
      * 添加积雪层
-     * 
+     *
      * @param pos 位置
      * @return 是否成功添加
      */

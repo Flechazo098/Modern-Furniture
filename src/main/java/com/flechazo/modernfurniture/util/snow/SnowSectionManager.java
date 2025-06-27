@@ -9,9 +9,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 积雪分区管理器
- * 
+ *
  * <p>负责将房间空间划分为层级化的分区，提供高效的空间索引和查询功能。</p>
- * 
+ *
  * <h2>主要功能</h2>
  * <ul>
  *   <li>空间分区划分和索引</li>
@@ -26,20 +26,20 @@ public class SnowSectionManager {
 
     /**
      * 构造分区管理器
-     * 
+     *
      * @param roomBlocks 房间方块位置集合
      */
     public SnowSectionManager(Set<BlockPos> roomBlocks) {
         this.sectionPartitions = new ConcurrentHashMap<>();
         this.chunkToSections = new ConcurrentHashMap<>();
         this.activeSections = ConcurrentHashMap.newKeySet();
-        
+
         initializeSectionPartitions(roomBlocks);
     }
 
     /**
      * 获取指定分区的方块位置
-     * 
+     *
      * @param sectionPos 分区位置
      * @return 方块位置集合
      */
@@ -49,7 +49,7 @@ public class SnowSectionManager {
 
     /**
      * 获取所有活跃分区
-     * 
+     *
      * @return 活跃分区集合
      */
     public Set<SectionPos> getActiveSections() {
@@ -58,7 +58,7 @@ public class SnowSectionManager {
 
     /**
      * 获取活跃分区数量
-     * 
+     *
      * @return 分区数量
      */
     public int getActiveSectionsCount() {
@@ -67,20 +67,20 @@ public class SnowSectionManager {
 
     /**
      * 选择用于处理的分区
-     * 
+     *
      * @param densityFactor 密度因子
-     * @param random 随机数生成器
+     * @param random        随机数生成器
      * @return 选中的分区列表
      */
     public List<SectionPos> selectSectionsForProcessing(double densityFactor, Random random) {
         List<SectionPos> sections = new ArrayList<>(activeSections);
-        
+
         // 基于负载和随机性选择分区
         Collections.shuffle(sections, random);
-        
+
         int maxSections = Math.max(1, Math.min(sections.size(),
-            (int) (sections.size() * densityFactor * 0.3)));
-        
+                (int) (sections.size() * densityFactor * 0.3)));
+
         return sections.subList(0, maxSections);
     }
 

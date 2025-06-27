@@ -5,7 +5,8 @@ import com.flechazo.modernfurniture.block.AirConditioningBlock;
 import com.flechazo.modernfurniture.config.modules.SnowGenerationConfig;
 import com.flechazo.modernfurniture.init.ModBlockEntities;
 import com.flechazo.modernfurniture.util.RoomDetector;
-import com.flechazo.modernfurniture.util.SnowManager;
+import com.flechazo.modernfurniture.util.snow.SnowManager;
+import com.flechazo.modernfurniture.util.snow.SnowStats;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -176,14 +177,14 @@ public class AirConditioningBlockEntity extends AbstractAnimatableBlockEntity {
             lastPerformanceLog = currentTime;
 
             if (snowManager != null) {
-                SnowManager.SnowStats stats = snowManager.getSnowStats();
+                SnowStats stats = snowManager.getSnowStats();
                 ModernFurniture.LOGGER.debug("降雪性能统计: {}", stats);
             }
         }
     }
 
     // 调试方法
-    public SnowManager.SnowStats getSnowStats() {
+    public SnowStats getSnowStats() {
         return snowManager != null ? snowManager.getSnowStats() : null;
     }
 

@@ -28,8 +28,6 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import java.util.Arrays;
-
 public class LaptopBlock extends Block implements EntityBlock {
     public static final BooleanProperty OPEN = BooleanProperty.create("open");
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -93,9 +91,9 @@ public class LaptopBlock extends Block implements EntityBlock {
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         boolean isOpen = state.getValue(OPEN);
         Direction facing = state.getValue(FACING);
-        
+
         VoxelShape shape = isOpen ? OPEN_SHAPE : CLOSED_SHAPE;
-        
+
         return VoxelShapeUtils.rotateShape(shape, facing);
     }
 

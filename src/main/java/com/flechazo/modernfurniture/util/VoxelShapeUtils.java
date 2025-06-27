@@ -7,10 +7,11 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import java.util.Arrays;
 
 public class VoxelShapeUtils {
-    
+
     /**
      * 根据朝向旋转 VoxelShape
-     * @param shape 原始形状
+     *
+     * @param shape  原始形状
      * @param facing 目标朝向
      * @return 旋转后的形状
      */
@@ -49,9 +50,10 @@ public class VoxelShapeUtils {
             default -> shape;
         };
     }
-    
+
     /**
      * 创建多个 box 并合并
+     *
      * @param boxes box坐标数组，每个数组包含6个double值 [minX, minY, minZ, maxX, maxY, maxZ]
      * @return 合并后的VoxelShape
      */
@@ -60,8 +62,8 @@ public class VoxelShapeUtils {
         for (double[] box : boxes) {
             if (box.length == 6) {
                 result = Shapes.or(result, Shapes.box(
-                    box[0] / 16.0, box[1] / 16.0, box[2] / 16.0,
-                    box[3] / 16.0, box[4] / 16.0, box[5] / 16.0
+                        box[0] / 16.0, box[1] / 16.0, box[2] / 16.0,
+                        box[3] / 16.0, box[4] / 16.0, box[5] / 16.0
                 ));
             }
         }

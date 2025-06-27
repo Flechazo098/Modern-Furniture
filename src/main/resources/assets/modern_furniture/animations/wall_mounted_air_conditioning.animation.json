@@ -48,6 +48,23 @@
                     }
                 }
             }
+        },
+        "opened": {
+            "loop": false,
+            "animation_length": 0.0,
+            "bones": {
+                "ac_blades": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                92.5,
+                                0,
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
         }
     },
     "geckolib_format_version": 2

@@ -31,7 +31,6 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import java.util.Arrays;
 import java.util.stream.Stream;
 
 public class AirConditioningBlock extends Block implements EntityBlock {

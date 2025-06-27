@@ -9,34 +9,21 @@ import com.flechazo.modernfurniture.util.SnowManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import software.bernie.geckolib.animatable.GeoBlockEntity;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.AnimationState;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.object.PlayState;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-public class AirConditioningBlockEntity extends BlockEntity implements GeoBlockEntity {
+public class AirConditioningBlockEntity extends AbstractAnimatableBlockEntity {
     private static final long PERFORMANCE_LOG_INTERVAL = 60000;
     private static final RawAnimation OPEN_ANIMATION = RawAnimation.begin().thenPlayAndHold("open");
+    private static final RawAnimation OPENED_ANIMATION = RawAnimation.begin().thenPlayAndHold("opened");
     private static final RawAnimation CLOSE_ANIMATION = RawAnimation.begin().thenPlayAndHold("close");
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    public boolean isOpen = false;
+
     private CompletableFuture<Void> roomDetectionFuture;
-    private boolean isAnimating = false;
-    private String currentAnimation = "";
-    private boolean needsAnimationSync = false;
     private boolean isCooling = false;
     private long coolingStartTime = 0;
     private Set<BlockPos> roomBlocks = null;
@@ -48,50 +35,28 @@ public class AirConditioningBlockEntity extends BlockEntity implements GeoBlockE
     }
 
     @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "ac_controller", 0, this::predicate)
-                .triggerableAnim("open", OPEN_ANIMATION)
-                .triggerableAnim("close", CLOSE_ANIMATION));
+    protected RawAnimation getOpenAnimation() {
+        return OPEN_ANIMATION;
     }
 
-    private PlayState predicate(AnimationState<AirConditioningBlockEntity> animationState) {
-        if (isAnimating) {
-            if (animationState.isCurrentAnimation(OPEN_ANIMATION) ||
-                    animationState.isCurrentAnimation(CLOSE_ANIMATION)) {
-                return PlayState.CONTINUE;
-            } else {
-                isAnimating = false;
-                currentAnimation = "";
-                return PlayState.STOP;
-            }
-        }
-        return PlayState.STOP;
+    @Override
+    protected RawAnimation getOpenedAnimation() {
+        return OPENED_ANIMATION;
     }
 
-    public void triggerAnimation(boolean opening) {
-        if (this.level instanceof ServerLevel) {
-            String targetAnimation = opening ? "open" : "close";
-            if (isAnimating && currentAnimation.equals(targetAnimation)) {
-                return;
-            }
+    @Override
+    protected RawAnimation getCloseAnimation() {
+        return CLOSE_ANIMATION;
+    }
 
-            isOpen = opening;
-            isAnimating = true;
-            currentAnimation = targetAnimation;
+    @Override
+    protected String getControllerName() {
+        return "ac_controller";
+    }
 
-            BlockState currentState = level.getBlockState(worldPosition);
-            if (currentState.hasProperty(AirConditioningBlock.OPEN)) {
-                level.setBlock(worldPosition, currentState.setValue(AirConditioningBlock.OPEN, opening), 3);
-            }
-
-            if (opening) {
-                triggerAnim("ac_controller", "open");
-            } else {
-                triggerAnim("ac_controller", "close");
-            }
-
-            setChanged();
-        }
+    @Override
+    protected BooleanProperty getOpenProperty() {
+        return AirConditioningBlock.OPEN;
     }
 
     public void startCooling() {
@@ -120,23 +85,6 @@ public class AirConditioningBlockEntity extends BlockEntity implements GeoBlockE
         }
     }
 
-    @Override
-    public void setRemoved() {
-        super.setRemoved();
-
-        if (roomDetectionFuture != null && !roomDetectionFuture.isDone()) {
-            roomDetectionFuture.cancel(true);
-        }
-
-        if (snowManager != null) {
-            try {
-                snowManager.shutdown();
-            } catch (Exception e) {
-            }
-            snowManager = null;
-        }
-    }
-
     public void stopCooling() {
         isCooling = false;
         coolingStartTime = 0;
@@ -157,13 +105,28 @@ public class AirConditioningBlockEntity extends BlockEntity implements GeoBlockE
     }
 
     @Override
-    public void saveAdditional(CompoundTag tag) {
+    public void setRemoved() {
+        super.setRemoved();
+
+        if (roomDetectionFuture != null && !roomDetectionFuture.isDone()) {
+            roomDetectionFuture.cancel(true);
+        }
+
+        if (snowManager != null) {
+            try {
+                snowManager.shutdown();
+            } catch (Exception e) {
+                // 忽略关闭异常
+            }
+            snowManager = null;
+        }
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putBoolean("IsCooling", isCooling);
         tag.putLong("CoolingStartTime", coolingStartTime);
-        tag.putBoolean("IsOpen", isOpen);
-        tag.putBoolean("IsAnimating", isAnimating);
-        tag.putString("CurrentAnimation", currentAnimation);
     }
 
     @Override
@@ -171,11 +134,6 @@ public class AirConditioningBlockEntity extends BlockEntity implements GeoBlockE
         super.load(tag);
         isCooling = tag.getBoolean("IsCooling");
         coolingStartTime = tag.getLong("CoolingStartTime");
-        isOpen = tag.getBoolean("IsOpen");
-        isAnimating = tag.getBoolean("IsAnimating");
-        currentAnimation = tag.getString("CurrentAnimation");
-
-        needsAnimationSync = true;
 
         if (isCooling && this.level instanceof ServerLevel) {
             roomDetectionFuture = RoomDetector.findRoomAsync(this.level, this.worldPosition)
@@ -190,45 +148,7 @@ public class AirConditioningBlockEntity extends BlockEntity implements GeoBlockE
                             this.setChanged();
                         }
                     })
-                    .exceptionally(throwable -> {
-                        return null;
-                    });
-        }
-    }
-
-    @Override
-    public CompoundTag getUpdateTag() {
-        CompoundTag tag = super.getUpdateTag();
-        tag.putBoolean("IsOpen", isOpen);
-        tag.putBoolean("IsAnimating", isAnimating);
-        tag.putString("CurrentAnimation", currentAnimation);
-        return tag;
-    }
-
-    @Override
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
-    }
-
-    @Override
-    public void handleUpdateTag(CompoundTag tag) {
-        super.handleUpdateTag(tag);
-        isOpen = tag.getBoolean("IsOpen");
-        isAnimating = tag.getBoolean("IsAnimating");
-        currentAnimation = tag.getString("CurrentAnimation");
-
-        needsAnimationSync = true;
-    }
-
-    public void clientTick() {
-        if (this.needsAnimationSync) {
-            this.needsAnimationSync = false;
-            this.isAnimating = true;
-
-            if (this.isOpen) {
-                this.currentAnimation = "open";
-                this.triggerAnim("ac_controller", "open");
-            }
+                    .exceptionally(throwable -> null);
         }
     }
 
@@ -245,8 +165,7 @@ public class AirConditioningBlockEntity extends BlockEntity implements GeoBlockE
                     logPerformanceStats(currentTime);
 
                 } catch (Exception e) {
-                    // 降雪处理异常，记录但不影响主要功能
-                    // 可以考虑重置降雪管理器或采取其他恢复措施
+                    ModernFurniture.LOGGER.warn("Failed to perform snow block entity", e);
                 }
             }
         }
@@ -263,25 +182,11 @@ public class AirConditioningBlockEntity extends BlockEntity implements GeoBlockE
         }
     }
 
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return cache;
-    }
-
-    public boolean isOpen() {
-        return isOpen;
-    }
-
-    /**
-     * 获取降雪统计信息（用于调试和监控）
-     */
+    // 调试方法
     public SnowManager.SnowStats getSnowStats() {
         return snowManager != null ? snowManager.getSnowStats() : null;
     }
 
-    /**
-     * 强制刷新降雪管理器（用于调试）
-     */
     public void refreshSnowManager() {
         if (snowManager != null && roomBlocks != null && !roomBlocks.isEmpty()) {
             snowManager.shutdown();

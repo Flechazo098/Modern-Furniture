@@ -6,25 +6,36 @@ import com.flechazo.modernfurniture.config.flags.RangeFlag;
 import com.flechazo.modernfurniture.util.ClassLoader;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class ConfigManager {
     private static final Set<ConfigModule> configModules = new HashSet<>();
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final Map<ForgeConfigSpec.ConfigValue, Field> map = new HashMap<>();
 
     public static void register(FMLJavaModLoadingContext context) {
-        ForgeConfigSpec spec = loadConfig();
-        context.registerConfig(ModConfig.Type.COMMON, spec);
+        context.registerConfig(ModConfig.Type.COMMON, init());
+        context.getModEventBus().addListener(ConfigManager::onConfigLoad);
     }
 
-    private static ForgeConfigSpec loadConfig() {
+    private static void onConfigLoad(final ModConfigEvent.Loading event) {
+        if (event.getConfig().getType() == ModConfig.Type.COMMON) {
+            load(); // need to load after this is loaded
+        }
+    }
+
+    private static ForgeConfigSpec init() {
+        // first load all modules
         configModules.addAll(ClassLoader.loadClasses("com.flechazo.modernfurniture.config.modules", ConfigModule.class));
         final ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
@@ -33,6 +44,7 @@ public class ConfigManager {
 
             builder.push(module.name());
 
+            // load single instance field
             for (Field field : fields) {
                 int modifiers = field.getModifiers();
                 if (Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers)) {
@@ -49,35 +61,41 @@ public class ConfigManager {
                     try {
                         Class<?> type = field.getType();
 
+                        ForgeConfigSpec.ConfigValue value = null;
+
                         if (type == boolean.class) {
-                            boolean value = builder.comment(configInfo.comment())
-                                    .define(configInfo.name(), (boolean) field.get(null))
-                                    .get();
-                            field.set(null, value);
+                            value = builder.comment(configInfo.comment())
+                                    .define(configInfo.name(), (boolean) field.get(null));
                         } else if (type == int.class && rangeFlag != null) {
-                            int value = builder.comment(configInfo.comment())
-                                    .defineInRange(configInfo.name(), (int) field.get(null), Integer.parseInt(rangeFlag.min()), Integer.parseInt(rangeFlag.max()))
-                                    .get();
-                            field.set(null, value);
+                            value = builder.comment(configInfo.comment())
+                                    .defineInRange(configInfo.name(), (int) field.get(null), Integer.parseInt(rangeFlag.min()), Integer.parseInt(rangeFlag.max()));
                         } else if (type == double.class && rangeFlag != null) {
-                            double value = builder.comment(configInfo.comment())
-                                    .defineInRange(configInfo.name(), (double) field.get(null), Double.parseDouble(rangeFlag.min()), Double.parseDouble(rangeFlag.max()))
-                                    .get();
-                            field.set(null, value);
+                            value = builder.comment(configInfo.comment())
+                                    .defineInRange(configInfo.name(), (double) field.get(null), Double.parseDouble(rangeFlag.min()), Double.parseDouble(rangeFlag.max()));
                         } else if (type == long.class && rangeFlag != null) {
-                            long value = builder.comment(configInfo.comment())
-                                    .defineInRange(configInfo.name(), (long) field.get(null), Long.parseLong(rangeFlag.min()), Long.parseLong(rangeFlag.max()))
-                                    .get();
-                            field.set(null, value);
+                            value = builder.comment(configInfo.comment())
+                                    .defineInRange(configInfo.name(), (long) field.get(null), Long.parseLong(rangeFlag.min()), Long.parseLong(rangeFlag.max()));
                         }
+                        map.put(value, field); // put into map - wait for next process
                     } catch (IllegalAccessException e) {
                         LOGGER.error("Error loading config field: {}", field.getName());
-                    } catch (NullPointerException ignored) {
                     }
                 }
             }
             builder.pop();
         }
         return builder.build();
+    }
+
+    public static void load() { // load all fields
+        map.forEach((value, field) -> {
+            field.setAccessible(true);
+            try {
+                if (value != null)
+                    field.set(null, value.get());
+            } catch (IllegalAccessException e) {
+                LOGGER.error("Error setting value to config field: {}", field.getName());
+            }
+        });
     }
 }

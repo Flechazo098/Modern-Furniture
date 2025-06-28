@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class ClassLoader {
+public class ClassLoaderUtil {
     private static final Logger LOGGER = LogManager.getLogger();
 
     public static List<Class<?>> getClassesInPackage(String packageName) {

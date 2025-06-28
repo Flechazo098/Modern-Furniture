@@ -1,7 +1,7 @@
 package com.flechazo.modernfurniture.block.entity;
 
 import com.flechazo.modernfurniture.block.WallMountedAirConditioningBlock;
-import com.flechazo.modernfurniture.init.ModBlockEntities;
+import com.flechazo.modernfurniture.block.manager.BlockEntityManager;
 import com.flechazo.modernfurniture.util.RoomDetector;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,7 +15,7 @@ public class WallMountedAirConditioningBlockEntity extends AbstractAirConditioni
     private static final RawAnimation CLOSE_ANIMATION = RawAnimation.begin().thenPlayAndHold("close");
 
     public WallMountedAirConditioningBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.WALL_MOUNTED_AIR_CONDITIONING_BLOCK_ENTITY.get(), pos, state);
+        super(BlockEntityManager.WALL_MOUNTED_AIR_CONDITIONING_BLOCK_ENTITY.get(), pos, state);
     }
 
     @Override

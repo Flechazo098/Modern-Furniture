@@ -6,7 +6,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.Arrays;
 
-public class VoxelShapeUtils {
+public class VoxelShapeUtil {
 
     /**
      * 根据朝向旋转 VoxelShape

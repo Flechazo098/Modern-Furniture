@@ -1,7 +1,7 @@
 package com.flechazo.modernfurniture.block;
 
 import com.flechazo.modernfurniture.block.entity.WallMountedAirConditioningBlockEntity;
-import com.flechazo.modernfurniture.util.VoxelShapeUtils;
+import com.flechazo.modernfurniture.util.VoxelShapeUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -28,7 +28,7 @@ public class WallMountedAirConditioningBlock extends AbstractAirConditioningBloc
     @Override
     protected VoxelShape getAirConditioningShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         Direction facing = state.getValue(FACING);
-        return VoxelShapeUtils.rotateShape(BASE_SHAPE, facing);
+        return VoxelShapeUtil.rotateShape(BASE_SHAPE, facing);
     }
 
     @Override

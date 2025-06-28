@@ -1,8 +1,8 @@
-package com.flechazo.modernfurniture.config.modules;
+package com.flechazo.modernfurniture.config.module;
 
 import com.flechazo.modernfurniture.config.ConfigModule;
-import com.flechazo.modernfurniture.config.flags.ConfigInfo;
-import com.flechazo.modernfurniture.config.flags.RangeFlag;
+import com.flechazo.modernfurniture.config.flag.ConfigInfo;
+import com.flechazo.modernfurniture.config.flag.RangeFlag;
 
 public class RoomDetectionConfig implements ConfigModule {
     @ConfigInfo(name = "maxRoomSize", comment = "能被识别为房间的最大方块数量")

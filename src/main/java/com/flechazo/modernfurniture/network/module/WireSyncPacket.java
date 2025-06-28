@@ -1,4 +1,4 @@
-package com.flechazo.modernfurniture.network.modules;
+package com.flechazo.modernfurniture.network.module;
 
 import com.flechazo.modernfurniture.ModernFurniture;
 import com.flechazo.modernfurniture.client.ClientWireManager;

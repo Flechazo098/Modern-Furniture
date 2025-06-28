@@ -1,7 +1,7 @@
 package com.flechazo.modernfurniture.block;
 
 import com.flechazo.modernfurniture.block.entity.DisplayBlockEntity;
-import com.flechazo.modernfurniture.util.VoxelShapeUtils;
+import com.flechazo.modernfurniture.util.VoxelShapeUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -76,7 +76,7 @@ public abstract class AbstractDisplayBlock extends Block implements EntityBlock 
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         Direction facing = state.getValue(FACING);
 
-        VoxelShape shape = VoxelShapeUtils.createMultiBox(
+        VoxelShape shape = VoxelShapeUtil.createMultiBox(
                 new double[]{7.94198729810778, 0, 7.742227771688616, 14.94198729810778, 0.75, 8.492227771688617},
                 new double[]{8.19198729810778, 0, 7.2622, 15.19198729810778, 0.75, 8.0122},
                 new double[]{7.25, 0, 7.65, 8.75, 4.6499999999999995, 8.5},
@@ -84,6 +84,6 @@ public abstract class AbstractDisplayBlock extends Block implements EntityBlock 
                 new double[]{-3.25, 2.5, 7.25, 19.25, 14.75, 7.75}
         );
 
-        return VoxelShapeUtils.rotateShape(shape, facing);
+        return VoxelShapeUtil.rotateShape(shape, facing);
     }
 }

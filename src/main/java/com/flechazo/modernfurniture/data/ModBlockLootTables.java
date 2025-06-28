@@ -1,6 +1,6 @@
 package com.flechazo.modernfurniture.data;
 
-import com.flechazo.modernfurniture.init.ModBlocks;
+import com.flechazo.modernfurniture.block.manager.BlockManager;
 import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.level.block.Block;
@@ -15,16 +15,16 @@ public class ModBlockLootTables extends BlockLootSubProvider {
 
     @Override
     protected void generate() {
-        this.dropSelf(ModBlocks.BLACK_DISPLAY.get());
-        this.dropSelf(ModBlocks.WHITE_DISPLAY.get());
-        this.dropSelf(ModBlocks.LAPTOP.get());
-        this.dropSelf(ModBlocks.WALL_MOUNTED_AIR_CONDITIONING.get());
-        this.dropSelf(ModBlocks.AC_OUTDOOR_UNIT.get());
+        this.dropSelf(BlockManager.BLACK_DISPLAY.get());
+        this.dropSelf(BlockManager.WHITE_DISPLAY.get());
+        this.dropSelf(BlockManager.LAPTOP.get());
+        this.dropSelf(BlockManager.WALL_MOUNTED_AIR_CONDITIONING.get());
+        this.dropSelf(BlockManager.AC_OUTDOOR_UNIT.get());
     }
 
     @Override
     protected Iterable<Block> getKnownBlocks() {
-        return ModBlocks.BLOCKS.getEntries().stream()
+        return BlockManager.BLOCKS.getEntries().stream()
                 .map(RegistryObject::get)
                 .toList();
     }

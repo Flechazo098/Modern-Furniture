@@ -1,7 +1,7 @@
 package com.flechazo.modernfurniture.block;
 
 import com.flechazo.modernfurniture.block.entity.LaptopBlockEntity;
-import com.flechazo.modernfurniture.util.VoxelShapeUtils;
+import com.flechazo.modernfurniture.util.VoxelShapeUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -94,7 +94,7 @@ public class LaptopBlock extends Block implements EntityBlock {
 
         VoxelShape shape = isOpen ? OPEN_SHAPE : CLOSED_SHAPE;
 
-        return VoxelShapeUtils.rotateShape(shape, facing);
+        return VoxelShapeUtil.rotateShape(shape, facing);
     }
 
     @Override

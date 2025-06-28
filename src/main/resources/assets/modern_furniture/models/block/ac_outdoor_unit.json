@@ -1,6 +1,6 @@
 {
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "modern_furniture:block/ac_outdoor_unit"
-  }
+    "parent": "minecraft:block/block",
+    "textures": {
+        "particle": "modern_furniture:block/ac_outdoor_unit"
+    }
 }

@@ -1,5 +1,6 @@
-package com.flechazo.modernfurniture.util.snow;
+package com.flechazo.modernfurniture.event.handler;
 
+import com.flechazo.modernfurniture.util.snow.SnowCacheManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.common.MinecraftForge;

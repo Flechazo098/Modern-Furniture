@@ -1,6 +1,6 @@
 package com.flechazo.modernfurniture.util.snow;
 
-import com.flechazo.modernfurniture.config.modules.SnowGenerationConfig;
+import com.flechazo.modernfurniture.config.module.SnowGenerationConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;

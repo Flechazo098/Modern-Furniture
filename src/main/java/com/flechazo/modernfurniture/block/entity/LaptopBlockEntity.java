@@ -1,7 +1,7 @@
 package com.flechazo.modernfurniture.block.entity;
 
 import com.flechazo.modernfurniture.block.LaptopBlock;
-import com.flechazo.modernfurniture.init.ModBlockEntities;
+import com.flechazo.modernfurniture.block.manager.BlockEntityManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -13,7 +13,7 @@ public class LaptopBlockEntity extends AbstractAnimatableBlockEntity {
     private static final RawAnimation CLOSE_ANIMATION = RawAnimation.begin().thenPlayAndHold("laptop_close");
 
     public LaptopBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.LAPTOP_BLOCK_ENTITY.get(), pos, state);
+        super(BlockEntityManager.LAPTOP_BLOCK_ENTITY.get(), pos, state);
     }
 
     @Override

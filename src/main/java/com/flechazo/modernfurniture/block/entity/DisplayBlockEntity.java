@@ -1,6 +1,6 @@
 package com.flechazo.modernfurniture.block.entity;
 
-import com.flechazo.modernfurniture.init.ModBlockEntities;
+import com.flechazo.modernfurniture.block.manager.BlockEntityManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -16,7 +16,7 @@ public class DisplayBlockEntity extends BlockEntity implements GeoBlockEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     public DisplayBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.DISPLAY_BLOCK_ENTITY.get(), pos, state);
+        super(BlockEntityManager.DISPLAY_BLOCK_ENTITY.get(), pos, state);
     }
 
     @Override

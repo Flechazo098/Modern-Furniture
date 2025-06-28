@@ -1,9 +1,10 @@
 package com.flechazo.modernfurniture.config;
 
-import com.flechazo.modernfurniture.config.flags.ConfigInfo;
-import com.flechazo.modernfurniture.config.flags.DoNotLoad;
-import com.flechazo.modernfurniture.config.flags.RangeFlag;
-import com.flechazo.modernfurniture.util.ClassLoader;
+import com.flechazo.modernfurniture.config.flag.ConfigInfo;
+import com.flechazo.modernfurniture.config.flag.DoNotLoad;
+import com.flechazo.modernfurniture.config.flag.RangeFlag;
+import com.flechazo.modernfurniture.util.ClassLoaderUtil;
+import com.mojang.datafixers.util.Pair;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
@@ -13,10 +14,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ConfigManager {
     public static final Map<ForgeConfigSpec.ConfigValue, Field> map = new HashMap<>();
@@ -27,7 +25,7 @@ public class ConfigManager {
         context.getModEventBus().addListener(ConfigManager::onConfigLoad);
     }
 
-    private static void onConfigLoad(final ModConfigEvent.Loading event) {
+    public static void onConfigLoad(final ModConfigEvent.Loading event) {
         if (event.getConfig().getType() == ModConfig.Type.COMMON) {
             load(); // need to load after this is loaded
         }
@@ -35,7 +33,7 @@ public class ConfigManager {
 
     private static ForgeConfigSpec init() {
         // first load all modules
-        final Set<ConfigModule> configModules = new HashSet<>(ClassLoader.loadClasses("com.flechazo.modernfurniture.config.modules", ConfigModule.class));
+        final Set<ConfigModule> configModules = new HashSet<>(ClassLoaderUtil.loadClasses("com.flechazo.modernfurniture.config.module", ConfigModule.class));
         final ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
         for (ConfigModule module : configModules) {
@@ -86,6 +84,30 @@ public class ConfigManager {
         return builder.build();
     }
 
+    public static Object tryParse(Class<?> targetType, Object value) {
+        if (!targetType.isAssignableFrom(value.getClass())) {
+            try {
+                if (targetType == Integer.class) {
+                    value = Integer.parseInt(value.toString());
+                } else if (targetType == Double.class) {
+                    value = Double.parseDouble(value.toString());
+                } else if (targetType == Boolean.class) {
+                    value = Boolean.parseBoolean(value.toString());
+                } else if (targetType == Long.class) {
+                    value = Long.parseLong(value.toString());
+                } else if (targetType == Float.class) {
+                    value = Float.parseFloat(value.toString());
+                } else if (targetType == String.class) {
+                    value = value.toString();
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to transform value {}!", value);
+                throw new IllegalFormatConversionException((char) 0, targetType);
+            }
+        }
+        return value;
+    }
+
     public static void load() { // load all fields
         map.forEach((value, field) -> {
             field.setAccessible(true);
@@ -98,18 +120,33 @@ public class ConfigManager {
         });
     }
 
-    public static void syncValueFromServer(Map<String, Object> serverConfig) {
+    public static void syncValue(Map<String, Object> serverConfig, boolean flag) {
         map.forEach((value, field) -> {
             field.setAccessible(true);
             try {
                 if (value != null) {
                     Object newValue = serverConfig.get(field.getName());
-                    if (newValue == null) newValue = value.getDefault();
-                    field.set(null, newValue);
+                    if (newValue != null) {
+                        field.set(null, newValue);
+                        if (flag) value.set(tryParse(value.getClass(), newValue));
+                    }
                 }
             } catch (IllegalAccessException e) {
                 LOGGER.error("Error sync config field: {}", field.getName());
             }
         });
+    }
+
+    public static Field getField(String key) {
+        return map.entrySet().stream().filter(entry -> entry.getValue().getName().equals(key)).findFirst().map(Map.Entry::getValue).orElse(null);
+    }
+
+    ;
+
+    public static Pair<Number, Number> getRange(String key) {
+        Field field = getField(key);
+        if (field == null) return null;
+        RangeFlag rangeFlag = field.getAnnotation(RangeFlag.class);
+        return rangeFlag != null ? Pair.of(Integer.parseInt(rangeFlag.min()), Integer.parseInt(rangeFlag.max())) : null;
     }
 }

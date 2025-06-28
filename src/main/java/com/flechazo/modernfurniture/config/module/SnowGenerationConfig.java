@@ -1,8 +1,8 @@
-package com.flechazo.modernfurniture.config.modules;
+package com.flechazo.modernfurniture.config.module;
 
 import com.flechazo.modernfurniture.config.ConfigModule;
-import com.flechazo.modernfurniture.config.flags.ConfigInfo;
-import com.flechazo.modernfurniture.config.flags.RangeFlag;
+import com.flechazo.modernfurniture.config.flag.ConfigInfo;
+import com.flechazo.modernfurniture.config.flag.RangeFlag;
 
 public class SnowGenerationConfig implements ConfigModule {
     @ConfigInfo(name = "enableSnow", comment = "是否在低温房间生成积雪")

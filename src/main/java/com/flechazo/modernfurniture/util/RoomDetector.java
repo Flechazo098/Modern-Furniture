@@ -1,7 +1,7 @@
 package com.flechazo.modernfurniture.util;
 
 import com.flechazo.modernfurniture.ModernFurniture;
-import com.flechazo.modernfurniture.config.modules.RoomDetectionConfig;
+import com.flechazo.modernfurniture.config.module.RoomDetectionConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;

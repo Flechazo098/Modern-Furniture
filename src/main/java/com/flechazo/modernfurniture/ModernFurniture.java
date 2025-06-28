@@ -1,7 +1,12 @@
 package com.flechazo.modernfurniture;
 
+import com.flechazo.modernfurniture.block.manager.BlockEntityManager;
+import com.flechazo.modernfurniture.block.manager.BlockManager;
 import com.flechazo.modernfurniture.config.ConfigManager;
-import com.flechazo.modernfurniture.init.*;
+import com.flechazo.modernfurniture.event.EventManager;
+import com.flechazo.modernfurniture.item.manager.BlockItemManager;
+import com.flechazo.modernfurniture.item.manager.ItemCreativeTabManager;
+import com.flechazo.modernfurniture.item.manager.ItemManager;
 import com.flechazo.modernfurniture.network.NetworkHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -16,12 +21,13 @@ public class ModernFurniture {
     public ModernFurniture(FMLJavaModLoadingContext context) {
         var modEventBus = context.getModEventBus();
 
-        ModBlocks.BLOCKS.register(modEventBus);
-        ModBlockItem.ITEMS.register(modEventBus);
-        ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
-        ModItem.ITEMS.register(modEventBus);
-        ModCreativeTab.CREATIVE_MODE_TABS.register(modEventBus);
+        BlockManager.BLOCKS.register(modEventBus);
+        BlockItemManager.ITEMS.register(modEventBus);
+        BlockEntityManager.BLOCK_ENTITIES.register(modEventBus);
+        ItemManager.ITEMS.register(modEventBus);
+        ItemCreativeTabManager.CREATIVE_MODE_TABS.register(modEventBus);
 
+        EventManager.register();
         ConfigManager.register(context);
         NetworkHandler.register(modEventBus);
     }

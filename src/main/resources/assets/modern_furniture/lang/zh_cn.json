@@ -5,7 +5,6 @@
     "block.modern_furniture.laptop": "笔记本电脑",
     "block.modern_furniture.wall_mounted_air_conditioning": "壁挂式空调",
     "block.modern_furniture.ac_outdoor_unit": "空调外机",
-
     "item.modern_furniture.wire_connector": "电线连接器",
     "item.modern_furniture.wire_connector.tooltip1": "在两个可连接设备上使用以建立连接。",
     "item.modern_furniture.wire_connector.tooltip2": "右键点击一个设备，再点击另一个。",

@@ -1,4 +1,4 @@
-package com.flechazo.modernfurniture.init;
+package com.flechazo.modernfurniture.block.manager;
 
 import com.flechazo.modernfurniture.ModernFurniture;
 import com.flechazo.modernfurniture.block.*;
@@ -7,7 +7,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
-public class ModBlocks {
+public class BlockManager {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS,
             ModernFurniture.MODID);
 

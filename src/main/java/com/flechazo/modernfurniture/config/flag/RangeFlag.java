@@ -1,4 +1,4 @@
-package com.flechazo.modernfurniture.config.flags;
+package com.flechazo.modernfurniture.config.flag;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

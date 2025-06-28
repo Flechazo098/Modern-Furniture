@@ -1,7 +1,7 @@
 package com.flechazo.modernfurniture.block;
 
 import com.flechazo.modernfurniture.block.entity.ACOutdoorUnitBlockEntity;
-import com.flechazo.modernfurniture.util.VoxelShapeUtils;
+import com.flechazo.modernfurniture.util.VoxelShapeUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -90,6 +90,6 @@ public class ACOutdoorUnitBlock extends Block implements EntityBlock {
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         Direction facing = state.getValue(FACING);
-        return VoxelShapeUtils.rotateShape(BASE_SHAPE, facing);
+        return VoxelShapeUtil.rotateShape(BASE_SHAPE, facing);
     }
 }

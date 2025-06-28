@@ -2,7 +2,7 @@ package com.flechazo.modernfurniture.util.wire;
 
 import com.flechazo.modernfurniture.ModernFurniture;
 import com.flechazo.modernfurniture.network.NetworkHandler;
-import com.flechazo.modernfurniture.network.modules.WireSyncPacket;
+import com.flechazo.modernfurniture.network.module.WireSyncPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -357,7 +357,7 @@ public class WireNetworkManager extends SavedData {
         ResourceLocation dimension = level.dimension().location();
         Set<WireConnection> connections = getAllConnections(dimension);
 
-        NetworkHandler.NETWORK.sendToClient(
+        NetworkHandler.sendToClient(
                 new WireSyncPacket(dimension, connections),
                 (ServerPlayer) player
         );
@@ -368,7 +368,7 @@ public class WireNetworkManager extends SavedData {
      */
     public void syncAllToClient(ServerLevel level, Player player) {
         for (Map.Entry<ResourceLocation, Set<WireConnection>> entry : connections.entrySet()) {
-            NetworkHandler.NETWORK.sendToClient(
+            NetworkHandler.sendToClient(
                     new WireSyncPacket(entry.getKey(), entry.getValue()),
                     (ServerPlayer) player
             );

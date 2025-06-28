@@ -1,7 +1,8 @@
 package com.flechazo.modernfurniture.util.snow;
 
 import com.flechazo.modernfurniture.ModernFurniture;
-import com.flechazo.modernfurniture.config.modules.SnowGenerationConfig;
+import com.flechazo.modernfurniture.config.module.SnowGenerationConfig;
+import com.flechazo.modernfurniture.event.handler.SnowEventHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
@@ -136,7 +137,6 @@ public class SnowManager {
      */
     public void shutdown() {
         clearAllSnow();
-        eventHandler.shutdown();
         cacheManager.shutdown();
         performanceMonitor.shutdown();
     }

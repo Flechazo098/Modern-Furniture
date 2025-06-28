@@ -1,7 +1,7 @@
 package com.flechazo.modernfurniture.block.entity;
 
 import com.flechazo.modernfurniture.block.ACOutdoorUnitBlock;
-import com.flechazo.modernfurniture.init.ModBlockEntities;
+import com.flechazo.modernfurniture.block.manager.BlockEntityManager;
 import com.flechazo.modernfurniture.util.wire.WireConnectable;
 import com.flechazo.modernfurniture.util.wire.WireConnection;
 import com.flechazo.modernfurniture.util.wire.WireConnectionType;
@@ -24,7 +24,7 @@ public class ACOutdoorUnitBlockEntity extends AbstractAnimatableBlockEntity impl
     private boolean hasValidConnection = false;
 
     public ACOutdoorUnitBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.AC_OUTDOOR_UNIT_BLOCK_ENTITY.get(), pos, state);
+        super(BlockEntityManager.AC_OUTDOOR_UNIT_BLOCK_ENTITY.get(), pos, state);
     }
 
     @Override

@@ -21,6 +21,8 @@ public class ModCreativeTab {
                         output.accept(ModBlockItem.WHITE_DISPLAY_ITEM.get());
                         output.accept(ModBlockItem.LAPTOP_ITEM.get());
                         output.accept(ModBlockItem.WALL_MOUNTED_AIR_CONDITIONING_ITEM.get());
+                        output.accept(ModBlockItem.AC_OUTDOOR_UNIT_ITEM.get());
+                        output.accept(ModItem.WIRE_CONNECTOR.get());
                     })
                     .build());
 }

@@ -1,10 +1,7 @@
 package com.flechazo.modernfurniture.init;
 
 import com.flechazo.modernfurniture.ModernFurniture;
-import com.flechazo.modernfurniture.block.BlackDisplayBlock;
-import com.flechazo.modernfurniture.block.LaptopBlock;
-import com.flechazo.modernfurniture.block.WallMountedAirConditioningBlock;
-import com.flechazo.modernfurniture.block.WhiteDisplayBlock;
+import com.flechazo.modernfurniture.block.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -18,4 +15,5 @@ public class ModBlocks {
     public static final RegistryObject<Block> WHITE_DISPLAY = BLOCKS.register("white_display", WhiteDisplayBlock::new);
     public static final RegistryObject<Block> LAPTOP = BLOCKS.register("laptop", LaptopBlock::new);
     public static final RegistryObject<Block> WALL_MOUNTED_AIR_CONDITIONING = BLOCKS.register("wall_mounted_air_conditioning", WallMountedAirConditioningBlock::new);
+    public static final RegistryObject<Block> AC_OUTDOOR_UNIT = BLOCKS.register("ac_outdoor_unit", ACOutdoorUnitBlock::new);
 }

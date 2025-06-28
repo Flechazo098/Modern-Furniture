@@ -18,6 +18,8 @@ public class ModBlockLootTables extends BlockLootSubProvider {
         this.dropSelf(ModBlocks.BLACK_DISPLAY.get());
         this.dropSelf(ModBlocks.WHITE_DISPLAY.get());
         this.dropSelf(ModBlocks.LAPTOP.get());
+        this.dropSelf(ModBlocks.WALL_MOUNTED_AIR_CONDITIONING.get());
+        this.dropSelf(ModBlocks.AC_OUTDOOR_UNIT.get());
     }
 
     @Override

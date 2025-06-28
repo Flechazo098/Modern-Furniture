@@ -3,5 +3,17 @@
     "block.modern_furniture.black_display": "Black Display",
     "block.modern_furniture.white_display": "White Display",
     "block.modern_furniture.laptop": "Laptop",
-    "block.modern_furniture.wall_mounted_air_conditioning": "Wall Mounted Air Conditioning"
+    "block.modern_furniture.wall_mounted_air_conditioning": "Wall Mounted Air Conditioning",
+    "block.modern_furniture.ac_outdoor_unit": "AC Outdoor Unit",
+
+    "item.modern_furniture.wire_connector": "Wire Connector",
+    "item.modern_furniture.wire_connector.tooltip1": "Use on two connectable devices to link them.",
+    "item.modern_furniture.wire_connector.tooltip2": "Right-click one, then the other.",
+    "item.modern_furniture.wire_connector.first_selected": "First position selected.",
+    "item.modern_furniture.wire_connector.same_position": "You clicked the same position.",
+    "item.modern_furniture.wire_connector.different_dimension": "Cannot connect across dimensions.",
+    "item.modern_furniture.wire_connector.not_connectable": "This block cannot be connected.",
+    "item.modern_furniture.wire_connector.connected": "Devices connected successfully.",
+    "item.modern_furniture.wire_connector.connection_failed": "Connection failed.",
+    "item.modern_furniture.wire_connector.first_pos": "First: (%s, %s, %s)"
 }

@@ -5,17 +5,23 @@ import com.flechazo.modernfurniture.config.modules.SnowGenerationConfig;
 import com.flechazo.modernfurniture.util.RoomDetector;
 import com.flechazo.modernfurniture.util.snow.SnowManager;
 import com.flechazo.modernfurniture.util.snow.SnowStats;
+import com.flechazo.modernfurniture.util.wire.WireConnectable;
+import com.flechazo.modernfurniture.util.wire.WireConnection;
+import com.flechazo.modernfurniture.util.wire.WireConnectionType;
+import com.flechazo.modernfurniture.util.wire.WireNetworkManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-public abstract class AbstractAirConditioningBlockEntity extends AbstractAnimatableBlockEntity {
+public abstract class AbstractAirConditioningBlockEntity extends AbstractAnimatableBlockEntity implements WireConnectable {
     private static final long PERFORMANCE_LOG_INTERVAL = 60000;
 
     private CompletableFuture<Void> roomDetectionFuture;
@@ -24,6 +30,7 @@ public abstract class AbstractAirConditioningBlockEntity extends AbstractAnimata
     private Set<BlockPos> roomBlocks = null;
     private SnowManager snowManager = null;
     private long lastPerformanceLog = 0;
+    private boolean hasValidConnection = false;
 
     public AbstractAirConditioningBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -36,9 +43,13 @@ public abstract class AbstractAirConditioningBlockEntity extends AbstractAnimata
     protected abstract BlockPos getParticleEffectPos();
 
     /**
-     * 开始制冷
+     * 开始制冷 - 只有在有有效连接时才能工作
      */
     public void startCooling() {
+        if (!hasValidConnection) {
+            return;
+        }
+
         if (this.level instanceof ServerLevel) {
             BlockPos startPos = getRoomDetectionStartPos();
             Set<BlockPos> detectedRoom = RoomDetector.findRoom(this.level, startPos);
@@ -95,6 +106,12 @@ public abstract class AbstractAirConditioningBlockEntity extends AbstractAnimata
             }
             snowManager = null;
         }
+
+        // 清理所有连接
+        if (level instanceof ServerLevel serverLevel) {
+            WireNetworkManager manager = WireNetworkManager.get(serverLevel);
+            manager.removeAllConnections(level, worldPosition);
+        }
     }
 
     @Override
@@ -102,6 +119,7 @@ public abstract class AbstractAirConditioningBlockEntity extends AbstractAnimata
         super.saveAdditional(tag);
         tag.putBoolean("IsCooling", isCooling);
         tag.putLong("CoolingStartTime", coolingStartTime);
+        tag.putBoolean("HasValidConnection", hasValidConnection);
     }
 
     @Override
@@ -109,8 +127,9 @@ public abstract class AbstractAirConditioningBlockEntity extends AbstractAnimata
         super.load(tag);
         isCooling = tag.getBoolean("IsCooling");
         coolingStartTime = tag.getLong("CoolingStartTime");
+        hasValidConnection = tag.getBoolean("HasValidConnection");
 
-        if (isCooling && this.level instanceof ServerLevel) {
+        if (isCooling && hasValidConnection && this.level instanceof ServerLevel) {
             roomDetectionFuture = RoomDetector.findRoomAsync(this.level, this.worldPosition)
                     .thenAccept(blocks -> {
                         if (this.level != null && !this.isRemoved()) {
@@ -127,11 +146,16 @@ public abstract class AbstractAirConditioningBlockEntity extends AbstractAnimata
         }
     }
 
-    /**
-     * 服务端tick处理
-     */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level instanceof ServerLevel serverLevel) {
+            checkInitialConnection(serverLevel);
+        }
+    }
+
     public void serverTick() {
-        if (this.level instanceof ServerLevel && this.isCooling && SnowGenerationConfig.enableSnow) {
+        if (this.level instanceof ServerLevel && this.isCooling && this.hasValidConnection && SnowGenerationConfig.enableSnow) {
             if (snowManager != null) {
                 long currentTime = this.level.getGameTime();
 
@@ -149,12 +173,62 @@ public abstract class AbstractAirConditioningBlockEntity extends AbstractAnimata
         }
     }
 
+    private void checkInitialConnection(ServerLevel serverLevel) {
+        WireNetworkManager manager = WireNetworkManager.get(serverLevel);
+        Set<WireConnection> connections = manager.getConnectionsAt(serverLevel.dimension().location(), worldPosition);
+        if (!connections.isEmpty()) {
+            WireConnection connection = connections.iterator().next();
+            if (manager.isConnectionActive(serverLevel.dimension().location(), connection)) {
+                onConnectionActivated(serverLevel, worldPosition, connection.getOtherEnd(worldPosition));
+            }
+        }
+    }
+
     private void logPerformanceStats(long currentTime) {
         if (currentTime - lastPerformanceLog > PERFORMANCE_LOG_INTERVAL) {
             lastPerformanceLog = currentTime;
             SnowStats stats = getSnowStats();
             ModernFurniture.LOGGER.debug("降雪性能统计: {}", stats);
         }
+    }
+
+    @Override
+    public void onConnectionActivated(Level level, BlockPos pos, BlockPos connectedPos) {
+        hasValidConnection = true;
+        // 连接激活时自动开启空调并开始制冷
+        if (!isOpen()) {
+            triggerAnimation(true); // 开启空调
+        }
+        startCooling(); // 开始制冷
+        setChanged();
+    }
+
+    @Override
+    public void onConnectionDeactivated(Level level, BlockPos pos, BlockPos connectedPos) {
+        hasValidConnection = false;
+        // 连接断开时停止制冷并关闭空调
+        stopCooling();
+        if (isOpen()) {
+            triggerAnimation(false); // 关闭空调
+        }
+        setChanged();
+    }
+
+    @Override
+    public boolean canConnectTo(Level level, BlockPos pos, BlockPos targetPos) {
+        BlockEntity targetEntity = level.getBlockEntity(targetPos);
+        return targetEntity instanceof WireConnectable connectable &&
+                connectable.getConnectionType() == WireConnectionType.AIR_CONDITIONING_OUTDOOR;
+    }
+
+    @Override
+    public WireConnectionType getConnectionType() {
+        return WireConnectionType.AIR_CONDITIONING_INDOOR;
+    }
+
+    @Override
+    public boolean isWorking(Level level, BlockPos pos) {
+        return isCooling && hasValidConnection;
     }
 
     // 调试方法
@@ -170,10 +244,14 @@ public abstract class AbstractAirConditioningBlockEntity extends AbstractAnimata
     }
 
     public boolean isCooling() {
-        return isCooling;
+        return isCooling && hasValidConnection;
     }
 
     public Set<BlockPos> getRoomBlocks() {
         return roomBlocks;
+    }
+
+    public boolean hasValidConnection() {
+        return hasValidConnection;
     }
 }

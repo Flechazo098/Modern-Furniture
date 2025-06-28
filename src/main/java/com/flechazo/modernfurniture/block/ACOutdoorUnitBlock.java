@@ -1,9 +1,9 @@
 package com.flechazo.modernfurniture.block;
 
-import com.flechazo.modernfurniture.block.entity.AbstractAirConditioningBlockEntity;
+import com.flechazo.modernfurniture.block.entity.ACOutdoorUnitBlockEntity;
+import com.flechazo.modernfurniture.util.VoxelShapeUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -20,32 +20,42 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public abstract class AbstractAirConditioningBlock extends Block implements EntityBlock {
-    public static final BooleanProperty OPEN = BooleanProperty.create("open");
+import java.util.stream.Stream;
+
+public class ACOutdoorUnitBlock extends Block implements EntityBlock {
+    public static final BooleanProperty RUNNING = BooleanProperty.create("running");
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
-    public AbstractAirConditioningBlock() {
+    private static final VoxelShape BASE_SHAPE = Stream.of(
+            Block.box(7, 2, 9.3, 13.5, 8, 9.3),
+            Block.box(1.75, 0, 15.75, 14.25, 10, 16),
+            Block.box(1.75, 0, 8.75, 14.25, 10, 9),
+            Block.box(14, 0, 8.8, 14.25, 10, 15.8),
+            Block.box(1.75, 0, 8.8, 2, 10, 15.8),
+            Block.box(2, 9.75, 8.8, 14, 10, 15.8),
+            Block.box(2, 0, 8.8, 14, 0.25, 15.8),
+            Block.box(9.25, 0, 9.55, 11.5, 10, 9.55)
+    ).reduce((v1, v2) -> Shapes.join(v1, v2, BooleanOp.OR)).get();
+
+    public ACOutdoorUnitBlock() {
         super(BlockBehaviour.Properties.of()
-                .strength(2.0F, 4.0F)
+                .strength(3.0F, 6.0F)
                 .noOcclusion()
-                .isViewBlocking((state, world, pos) -> false)
                 .sound(SoundType.METAL)
         );
         this.registerDefaultState(this.defaultBlockState()
-                .setValue(OPEN, false)
+                .setValue(RUNNING, false)
                 .setValue(FACING, Direction.NORTH));
     }
 
-    protected abstract VoxelShape getAirConditioningShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context);
-
-    protected abstract void addParticleEffects(BlockState state, Level level, BlockPos pos, RandomSource random);
-
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(OPEN, FACING);
+        builder.add(RUNNING, FACING);
     }
 
     @Override
@@ -59,32 +69,27 @@ public abstract class AbstractAirConditioningBlock extends Block implements Enti
         return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
-    @Override
-    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        if (state.getValue(OPEN)) {
-            addParticleEffects(state, level, pos, random);
-        }
-    }
 
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide) {
             return (lvl, pos, st, be) -> {
-                if (be instanceof AbstractAirConditioningBlockEntity acEntity) {
+                if (be instanceof ACOutdoorUnitBlockEntity acEntity) {
                     acEntity.clientTick();
                 }
             };
-        } else {
-            return (lvl, pos, st, be) -> {
-                if (be instanceof AbstractAirConditioningBlockEntity acEntity) {
-                    acEntity.serverTick();
-                }
-            };
         }
+        return null;
+    }
+
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new ACOutdoorUnitBlockEntity(pos, state);
     }
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return getAirConditioningShape(state, level, pos, context);
+        Direction facing = state.getValue(FACING);
+        return VoxelShapeUtils.rotateShape(BASE_SHAPE, facing);
     }
 }

@@ -3,5 +3,17 @@
     "block.modern_furniture.black_display": "黑色显示器",
     "block.modern_furniture.white_display": "白色显示器",
     "block.modern_furniture.laptop": "笔记本电脑",
-    "block.modern_furniture.wall_mounted_air_conditioning": "壁挂式空调"
+    "block.modern_furniture.wall_mounted_air_conditioning": "壁挂式空调",
+    "block.modern_furniture.ac_outdoor_unit": "空调外机",
+
+    "item.modern_furniture.wire_connector": "电线连接器",
+    "item.modern_furniture.wire_connector.tooltip1": "在两个可连接设备上使用以建立连接。",
+    "item.modern_furniture.wire_connector.tooltip2": "右键点击一个设备，再点击另一个。",
+    "item.modern_furniture.wire_connector.first_selected": "已选择第一个位置。",
+    "item.modern_furniture.wire_connector.same_position": "你点击了相同的位置。",
+    "item.modern_furniture.wire_connector.different_dimension": "无法跨维度连接。",
+    "item.modern_furniture.wire_connector.not_connectable": "该方块不可连接。",
+    "item.modern_furniture.wire_connector.connected": "设备已成功连接。",
+    "item.modern_furniture.wire_connector.connection_failed": "连接失败。",
+    "item.modern_furniture.wire_connector.first_pos": "第一个位置: (%s, %s, %s)"
 }

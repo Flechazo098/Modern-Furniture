@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "modern_furniture:wall_mounted_air_conditioning"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "modern_furniture:blocks/wall_mounted_air_conditioning"
+}

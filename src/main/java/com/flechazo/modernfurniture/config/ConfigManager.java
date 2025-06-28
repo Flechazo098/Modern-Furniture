@@ -19,8 +19,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class ConfigManager {
-    private static final Logger LOGGER = LogManager.getLogger();
     public static final Map<ForgeConfigSpec.ConfigValue, Field> map = new HashMap<>();
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public static void register(FMLJavaModLoadingContext context) {
         context.registerConfig(ModConfig.Type.COMMON, init());

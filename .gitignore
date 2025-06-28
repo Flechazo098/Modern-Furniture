@@ -2,6 +2,7 @@
 .idea/
 run/
 run-data/
+src/generated/resources/.cache
 
 *.iml
 *.ipr

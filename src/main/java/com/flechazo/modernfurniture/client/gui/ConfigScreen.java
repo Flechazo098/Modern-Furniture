@@ -4,6 +4,7 @@ import com.flechazo.modernfurniture.config.ConfigManager;
 import com.flechazo.modernfurniture.network.NetworkHandler;
 import com.flechazo.modernfurniture.network.module.ConfigPacket;
 import com.mojang.datafixers.util.Pair;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -22,6 +23,10 @@ public class ConfigScreen extends Screen {
     // Original configuration entries
     private final List<Map.Entry<String, Object>> configEntries;
 
+    private final boolean isClient;
+
+    private ConfigScreen origin = null;
+
     // Pagination variables
     private int currentPage = 0;
     private int itemsPerPage = 0;
@@ -38,9 +43,10 @@ public class ConfigScreen extends Screen {
     private static final int PANEL_TOP = 30;
     private static final int PANEL_BOTTOM_MARGIN = 50;
 
-    public ConfigScreen(Map<String, Object> serverConfig) {
+    public ConfigScreen(Map<String, Object> serverConfig, boolean isClient) {
         super(Component.literal("Modern Furniture Config"));
         this.configEntries = new ArrayList<>(serverConfig.entrySet());
+        this.isClient = isClient;
     }
 
     @Override
@@ -67,7 +73,6 @@ public class ConfigScreen extends Screen {
                         Component.translatable("config.modern_furniture.prev"),
                         button -> {
                             if (currentPage > 0) {
-                                // Save current page changes before switching
                                 saveCurrentPageChanges();
                                 currentPage--;
                                 clearWidgets();
@@ -92,7 +97,6 @@ public class ConfigScreen extends Screen {
                         Component.translatable("config.modern_furniture.next"),
                         button -> {
                             if (currentPage < totalPages - 1) {
-                                // Save current page changes before switching
                                 saveCurrentPageChanges();
                                 currentPage++;
                                 clearWidgets();
@@ -102,39 +106,75 @@ public class ConfigScreen extends Screen {
                 .bounds(width / 2 + 70, height - 30, BUTTON_WIDTH, BUTTON_HEIGHT)
                 .build());
 
-        // Action buttons
+        // Unified Y position for action buttons
+        int actionY = height - 60;
+        // Reduced button width for better fit
+        int actionButtonWidth = 80;
+        // Calculate total width of action buttons
+        int totalWidth = 4 * actionButtonWidth + 3 * 10; // 4 buttons with 10px spacing
+        // Starting X position for centered layout
+        int startX = (width - totalWidth) / 2;
+
+        // Switch button
+        addRenderableWidget(Button.builder(
+                        Component.translatable(isClient ?
+                                "config.modern_furniture.switch_to_server" :
+                                "config.modern_furniture.switch_to_client"),
+                        button -> {
+                            if (origin != null) {
+                                Minecraft.getInstance().setScreen(origin);
+                            } else {
+                                origin = new ConfigScreen(ConfigManager.createSyncData(true), true);
+                                origin.origin = this;
+                                Minecraft.getInstance().setScreen(origin);
+                            }
+                        })
+                .bounds(startX, actionY, actionButtonWidth, BUTTON_HEIGHT)
+                .build());
+
+        // Save button
         addRenderableWidget(Button.builder(
                                 Component.translatable("config.modern_furniture.save"),
                                 button -> saveConfig()
                         )
-                        .bounds(width / 2 - 155, height - 60, 100, BUTTON_HEIGHT)
+                        .bounds(startX + actionButtonWidth + 10, actionY, actionButtonWidth, BUTTON_HEIGHT)
                         .build()
         );
 
+        // Reset button
         addRenderableWidget(Button.builder(
                                 Component.translatable("config.modern_furniture.reset_default"),
                                 button -> resetToDefaults()
                         )
-                        .bounds(width / 2 - 50, height - 60, 100, BUTTON_HEIGHT)
+                        .bounds(startX + 2 * (actionButtonWidth + 10), actionY, actionButtonWidth, BUTTON_HEIGHT)
                         .build()
         );
 
+        // Cancel button
         addRenderableWidget(Button.builder(
                                 Component.translatable("config.modern_furniture.cancel"),
-                                button -> onClose()
+                                button -> {
+                                    onClose();
+                                }
                         )
-                        .bounds(width / 2 + 55, height - 60, 100, BUTTON_HEIGHT)
+                        .bounds(startX + 3 * (actionButtonWidth + 10), actionY, actionButtonWidth, BUTTON_HEIGHT)
                         .build()
         );
     }
 
+
     private void resetToDefaults() {
-        // 清空修改缓存
+        // clear cache
         modifiedConfigCache.clear();
 
-        // 发送重置请求到服务器
-        ConfigPacket packet = ConfigPacket.reSyncRequest();
-        NetworkHandler.sendToServer(packet);
+        if (isClient) {
+            // load default value from client
+            applyData(ConfigManager.defaultValues);
+        } else {
+            // send load default value request to server
+            ConfigPacket packet = ConfigPacket.reSyncRequest();
+            NetworkHandler.sendToServer(packet);
+        }
     }
 
     private void createPageWidgets() {
@@ -289,11 +329,26 @@ public class ConfigScreen extends Screen {
     private void saveConfig() {
         // Save current page before final save
         saveCurrentPageChanges();
+        if (isClient) {
+            ConfigManager.syncValue(modifiedConfigCache, true);
+        } else {
+            // Send all cached modifications to server
+            ConfigPacket packet = ConfigPacket.createForUpdate(modifiedConfigCache);
+            NetworkHandler.sendToServer(packet);
+        }
+    }
 
-        // Send all cached modifications to server
-        ConfigPacket packet = ConfigPacket.createForUpdate(modifiedConfigCache);
-        NetworkHandler.sendToServer(packet);
-        onClose();
+    @Override
+    public void onClose() {
+        super.onClose();
+        delOrigin();
+    }
+
+    private void delOrigin() {
+        if (this.origin != null) {
+            this.origin.origin = null;
+            this.origin = null;
+        }
     }
 
     public void updateConfig(Map<String, Object> configData) {

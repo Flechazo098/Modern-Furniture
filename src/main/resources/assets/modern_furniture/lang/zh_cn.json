@@ -19,5 +19,7 @@
     "config.modern_furniture.next": "下一页 >>",
     "config.modern_furniture.save": "保存",
     "config.modern_furniture.reset_default": "恢复默认",
-    "config.modern_furniture.cancel": "取消"
+    "config.modern_furniture.cancel": "取消",
+    "config.modern_furniture.switch_to_client": "切换至客户端配置",
+    "config.modern_furniture.switch_to_server": "切换至服务端配置"
 }

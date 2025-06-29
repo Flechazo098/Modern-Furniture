@@ -1,13 +1,14 @@
 package com.flechazo.modernfurniture.command;
 
+import com.flechazo.modernfurniture.client.gui.ConfigScreen;
 import com.flechazo.modernfurniture.config.ConfigManager;
 import com.flechazo.modernfurniture.network.NetworkHandler;
 import com.flechazo.modernfurniture.network.module.ConfigPacket;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
+import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -26,8 +27,7 @@ public class ConfigCommand {
         ServerPlayer player = ret.getSource().getPlayer();
         if (player != null) {
             if (!player.hasPermissions(2)) {
-                player.sendSystemMessage(Component.literal("You don't have permission to update the config"));
-                return 1;
+                Minecraft.getInstance().setScreen(new ConfigScreen(Map.copyOf(ConfigManager.createSyncData(false)), true));
             }
             ConfigPacket packet = ConfigPacket.createForSync(Map.copyOf(ConfigManager.map));
             NetworkHandler.sendToClient(packet, player);

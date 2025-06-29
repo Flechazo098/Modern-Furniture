@@ -156,12 +156,12 @@ public class ConfigManager {
         return rangeFlag != null ? Pair.of(Integer.parseInt(rangeFlag.min()), Integer.parseInt(rangeFlag.max())) : null;
     }
 
-    public static Map<String, Object> createSyncData() {
+    public static Map<String, Object> createSyncData(boolean getAll) {
         Map<String, Object> map = new HashMap<>();
         Map.copyOf(ConfigManager.map).forEach((configValue, field) -> {
             field.setAccessible(true);
             DoNotSync doNotSync = field.getAnnotation(DoNotSync.class);
-            if (doNotSync != null) return;
+            if ((!getAll) && doNotSync != null) return;
             map.put(field.getName(), configValue.get());
         });
         return map;

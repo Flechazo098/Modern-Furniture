@@ -15,7 +15,7 @@ public class ConfigSyncEventHandler {
             ConfigPacket packet = ConfigPacket.syncRequest(GlobalConfig.syncDataFromServer);
             NetworkHandler.sendToServer(packet);
         } else if (GlobalConfig.enforceServerConfigDataSync && event.getEntity() instanceof ServerPlayer player) {
-            NetworkHandler.sendToClient(ConfigPacket.syncResponse(ConfigManager.createSyncData()), player);
+            NetworkHandler.sendToClient(ConfigPacket.syncResponse(ConfigManager.createSyncData(false)), player);
         }
     }
 

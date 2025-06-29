@@ -152,7 +152,7 @@ public class ConfigPacket extends PacketHandler.AbstractPacket {
         } else {
             if ((type >> 1) % 2 == 0) {
                 if (!GlobalConfig.enforceServerConfigDataSync) {
-                    NetworkHandler.sendToClient(ConfigPacket.syncResponse(ConfigManager.createSyncData()), player);
+                    NetworkHandler.sendToClient(ConfigPacket.syncResponse(ConfigManager.createSyncData(false)), player);
                 }
             }
         }
@@ -161,7 +161,7 @@ public class ConfigPacket extends PacketHandler.AbstractPacket {
     private void handleClientSide() {
         if ((type >> 2) % 2 == 0) {
             if ((type >> 1) % 2 == 0) {
-                Minecraft.getInstance().setScreen(new ConfigScreen(configData));
+                Minecraft.getInstance().setScreen(new ConfigScreen(configData, false));
             } else {
                 Screen screen = Minecraft.getInstance().screen;
                 if (screen instanceof ConfigScreen) {

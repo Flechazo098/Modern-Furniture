@@ -19,5 +19,7 @@
     "config.modern_furniture.next": "Next >>",
     "config.modern_furniture.save": "Save",
     "config.modern_furniture.reset_default": "Reset Default",
-    "config.modern_furniture.cancel": "Cancel"
+    "config.modern_furniture.cancel": "Cancel",
+    "config.modern_furniture.switch_to_client": "Switch to Client",
+    "config.modern_furniture.switch_to_server": "Switch to Server"
 }

@@ -103,18 +103,22 @@ public class ConfigPacket extends PacketHandler.AbstractPacket {
         configData.clear();
 
         for (int i = 0; i < size; i++) {
-            String key = buf.readUtf();
-            byte type = buf.readByte();
+            decodeValue(buf);
+        }
+    }
 
-            switch (type) {
-                case 0 -> configData.put(key, buf.readBoolean());
-                case 1 -> configData.put(key, buf.readInt());
-                case 2 -> configData.put(key, buf.readLong());
-                case 3 -> configData.put(key, buf.readFloat());
-                case 4 -> configData.put(key, buf.readDouble());
-                case 5 -> configData.put(key, buf.readUtf());
-                default -> throw new IllegalArgumentException("Unknown config type: " + type);
-            }
+    private void decodeValue(FriendlyByteBuf buf) {
+        String key = buf.readUtf();
+        byte type = buf.readByte();
+
+        switch (type) {
+            case 0 -> configData.put(key, buf.readBoolean());
+            case 1 -> configData.put(key, buf.readInt());
+            case 2 -> configData.put(key, buf.readLong());
+            case 3 -> configData.put(key, buf.readFloat());
+            case 4 -> configData.put(key, buf.readDouble());
+            case 5 -> configData.put(key, buf.readUtf());
+            default -> throw new IllegalArgumentException("Unknown config type: " + type);
         }
     }
 

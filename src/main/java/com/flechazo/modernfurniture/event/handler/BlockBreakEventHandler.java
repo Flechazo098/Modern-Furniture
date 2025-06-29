@@ -9,7 +9,6 @@ import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class BlockBreakEventHandler {
-
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
         if (event.getLevel() instanceof ServerLevel serverLevel) {

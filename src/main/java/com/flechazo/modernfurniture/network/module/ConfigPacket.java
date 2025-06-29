@@ -2,6 +2,7 @@ package com.flechazo.modernfurniture.network.module;
 
 import com.flechazo.modernfurniture.client.gui.ConfigScreen;
 import com.flechazo.modernfurniture.config.ConfigManager;
+import com.flechazo.modernfurniture.config.module.GlobalConfig;
 import com.flechazo.modernfurniture.network.NetworkHandler;
 import com.flechazo.modernfurniture.network.PacketHandler;
 import net.minecraft.client.Minecraft;
@@ -25,13 +26,13 @@ public class ConfigPacket extends PacketHandler.AbstractPacket {
         this.type = type;
     }
 
-    public static ConfigPacket createForUpdate(Map<String, Object> serverConfig) {
-        ConfigPacket packet = new ConfigPacket(0b0000);
+    public static ConfigPacket createForUpdate(Map<String, Object> serverConfig) { // post to server to save config
+        ConfigPacket packet = new ConfigPacket(0b0000); // type: last one for 0: from client,1: from server
         packet.configData.putAll(serverConfig);
         return packet;
     }
 
-    public static ConfigPacket createForSync(Map<ForgeConfigSpec.ConfigValue, Field> map) {
+    public static ConfigPacket createForSync(Map<ForgeConfigSpec.ConfigValue, Field> map) { // send config to client
         ConfigPacket packet = new ConfigPacket(0b0001);
         map.forEach((configValue, field) -> {
             packet.configData.put(field.getName(), configValue.get());
@@ -39,12 +40,24 @@ public class ConfigPacket extends PacketHandler.AbstractPacket {
         return packet;
     }
 
-    public static ConfigPacket reSyncRequest() {
+    public static ConfigPacket reSyncRequest() { // resync in gui
         return new ConfigPacket(0b0010);
     }
 
-    public static ConfigPacket reSyncResponse(Map<String, Object> config) {
+    public static ConfigPacket reSyncResponse(Map<String, Object> config) { // resync in gui
         ConfigPacket packet = new ConfigPacket(0b0011);
+        packet.configData.putAll(config);
+        return packet;
+    }
+
+    public static ConfigPacket syncRequest(boolean client) { // sync in join game
+        ConfigPacket packet = new ConfigPacket(0b0100);
+        packet.configData.put("syncDataFromServer", client);
+        return packet;
+    }
+
+    public static ConfigPacket syncResponse(Map<String, Object> config) { // sync in join game
+        ConfigPacket packet = new ConfigPacket(0b0101);
         packet.configData.putAll(config);
         return packet;
     }
@@ -126,20 +139,34 @@ public class ConfigPacket extends PacketHandler.AbstractPacket {
             player.sendSystemMessage(Component.literal("You don't have permission to update the config"));
             return;
         }
-        if ((type >> 1) % 2 == 0) {
-            ConfigManager.syncValue(configData, true);
+        if ((type >> 2) % 2 == 0) {
+            if ((type >> 1) % 2 == 0) {
+                ConfigManager.syncValue(configData, true);
+            } else {
+                NetworkHandler.sendToClient(reSyncResponse(ConfigManager.defaultValues), player);
+            }
         } else {
-            NetworkHandler.sendToClient(reSyncResponse(ConfigManager.defaultValues), player);
+            if ((type >> 1) % 2 == 0) {
+                if (!GlobalConfig.enforceServerConfigDataSync) {
+                    NetworkHandler.sendToClient(ConfigPacket.syncResponse(ConfigManager.createSyncData()), player);
+                }
+            }
         }
     }
 
     private void handleClientSide() {
-        if ((type >> 1) % 2 == 0) {
-            Minecraft.getInstance().setScreen(new ConfigScreen(configData));
+        if ((type >> 2) % 2 == 0) {
+            if ((type >> 1) % 2 == 0) {
+                Minecraft.getInstance().setScreen(new ConfigScreen(configData));
+            } else {
+                Screen screen = Minecraft.getInstance().screen;
+                if (screen instanceof ConfigScreen) {
+                    ((ConfigScreen) screen).updateConfig(configData);
+                }
+            }
         } else {
-            Screen screen = Minecraft.getInstance().screen;
-            if (screen instanceof ConfigScreen) {
-                ((ConfigScreen) screen).updateConfig(configData);
+            if ((type >> 1) % 2 == 0) {
+                ConfigManager.syncValue(configData, false);
             }
         }
     }

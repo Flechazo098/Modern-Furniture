@@ -254,8 +254,7 @@ public class ConfigScreen extends Screen {
                 }
             } else if (widget instanceof ForgeSlider slider) {
                 Number currentValue = slider.getValue();
-                if (originalValue instanceof Number) {
-                    Number original = (Number) originalValue;
+                if (originalValue instanceof Number original) {
                     if (Math.abs(original.doubleValue() - currentValue.doubleValue()) > 0.0001) {
                         modifiedConfigCache.put(key, ConfigManager.tryParse(originalValue.getClass(), currentValue));
                     }

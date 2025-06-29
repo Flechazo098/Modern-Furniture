@@ -2,6 +2,7 @@ package com.flechazo.modernfurniture.config;
 
 import com.flechazo.modernfurniture.config.flag.ConfigInfo;
 import com.flechazo.modernfurniture.config.flag.DoNotLoad;
+import com.flechazo.modernfurniture.config.flag.DoNotSync;
 import com.flechazo.modernfurniture.config.flag.RangeFlag;
 import com.flechazo.modernfurniture.util.ClassLoaderUtil;
 import com.mojang.datafixers.util.Pair;
@@ -153,5 +154,16 @@ public class ConfigManager {
         if (field == null) return null;
         RangeFlag rangeFlag = field.getAnnotation(RangeFlag.class);
         return rangeFlag != null ? Pair.of(Integer.parseInt(rangeFlag.min()), Integer.parseInt(rangeFlag.max())) : null;
+    }
+
+    public static Map<String, Object> createSyncData() {
+        Map<String, Object> map = new HashMap<>();
+        Map.copyOf(ConfigManager.map).forEach((configValue, field) -> {
+            field.setAccessible(true);
+            DoNotSync doNotSync = field.getAnnotation(DoNotSync.class);
+            if (doNotSync != null) return;
+            map.put(field.getName(), configValue.get());
+        });
+        return map;
     }
 }

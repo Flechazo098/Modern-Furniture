@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 积雪算法实现
@@ -78,7 +79,7 @@ public class SnowAlgorithm {
                 operations.addAll(sectionOps);
 
                 // 限制总操作数
-                if (operations.size() >= dynamicParams.maxProcessPerTick) {
+                if (operations.size() >= dynamicParams.getMaxProcessPerTick()) {
                     break;
                 }
             }
@@ -242,16 +243,17 @@ public class SnowAlgorithm {
         private volatile double poissonLambda;
         private volatile double densityFactor;
         private volatile double spatialVariance;
-        private volatile int maxProcessPerTick;
+        private final AtomicInteger maxProcessPerTick;
 
         DynamicParameters(int roomSize) {
+            this.maxProcessPerTick = new AtomicInteger(Math.max(10, roomSize / 10));
             updateParameters(0, 0);
-            this.maxProcessPerTick = Math.max(10, roomSize / 10);
         }
 
         void updateParameters(double currentDensity, double avgProcessTime) {
             // 动态调整泊松参数
-            double baseLambda = Math.log(maxProcessPerTick + 1) * 0.5;
+            int currentMax = maxProcessPerTick.get();
+            double baseLambda = Math.log(currentMax + 1) * 0.5;
             double densityAdjustment = Math.max(0.1, 1.0 - currentDensity * 0.5);
             this.poissonLambda = Math.max(0.5, Math.min(8.0, baseLambda * densityAdjustment));
 
@@ -262,11 +264,15 @@ public class SnowAlgorithm {
             this.spatialVariance = Math.max(0.5, Math.min(2.0, 1.0 + currentDensity * 0.5));
 
             // 动态调整每tick处理量
-            if (avgProcessTime > 50) { // 如果处理时间超过50ms
-                this.maxProcessPerTick = Math.max(10, (int) (this.maxProcessPerTick * 0.8));
-            } else if (avgProcessTime < 10) { // 如果处理时间小于10ms
-                this.maxProcessPerTick = Math.min(maxProcessPerTick * 2, (int) (this.maxProcessPerTick * 1.2));
+            if (avgProcessTime > 50) {
+                maxProcessPerTick.updateAndGet(v -> Math.max(10, (int) (v * 0.8)));
+            } else if (avgProcessTime < 10) {
+                maxProcessPerTick.updateAndGet(v -> Math.min(v * 2, (int) (v * 1.2)));
             }
+        }
+
+        int getMaxProcessPerTick() {
+            return maxProcessPerTick.get();
         }
     }
 }

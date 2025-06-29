@@ -20,7 +20,7 @@ public class ConfigScreen extends Screen {
     // Stores modified configuration values across pages
     private final Map<String, Object> modifiedConfigCache = new HashMap<>();
     // Original configuration entries
-    private List<Map.Entry<String, Object>> configEntries;
+    private final List<Map.Entry<String, Object>> configEntries;
 
     // Pagination variables
     private int currentPage = 0;

@@ -15,7 +15,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.saveddata.SavedData;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -28,350 +27,280 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WireNetworkManager extends SavedData {
     private static final String DATA_NAME = ModernFurniture.MODID + "_wire_network";
 
-    // 所有连接关系 (维度 -> 连接集合)
+    // 各维度所有连接（未激活和激活）
     private final Map<ResourceLocation, Set<WireConnection>> connections = new ConcurrentHashMap<>();
-
-    // 当前激活的连接 (维度 -> 连接集合)
+    // 各维度当前激活的连接
     private final Map<ResourceLocation, Set<WireConnection>> activeConnections = new ConcurrentHashMap<>();
-
-    // 位置到连接的映射，用于快速查找 (维度 -> 位置 -> 连接集合)
+    // 各维度中每个位置对应的连接索引
     private final Map<ResourceLocation, Map<BlockPos, Set<WireConnection>>> positionIndex = new ConcurrentHashMap<>();
 
+    // 获取当前维度的连接数据实例
     public static WireNetworkManager get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(
-                WireNetworkManager::load,
-                WireNetworkManager::new,
-                DATA_NAME
-        );
+        return level.getDataStorage().computeIfAbsent(WireNetworkManager::load, WireNetworkManager::new, DATA_NAME);
     }
 
+    // 从NBT加载数据
     public static WireNetworkManager load(CompoundTag tag) {
         WireNetworkManager manager = new WireNetworkManager();
+        ModernFurniture.LOGGER.info("Loading WireNetworkManager from NBT, tag size: {}", tag.size());
 
-        ListTag dimensionsList = tag.getList("dimensions", Tag.TAG_COMPOUND);
-        for (int i = 0; i < dimensionsList.size(); i++) {
-            CompoundTag dimensionTag = dimensionsList.getCompound(i);
+        for (Tag baseTag : tag.getList("dimensions", Tag.TAG_COMPOUND)) {
+            CompoundTag dimensionTag = (CompoundTag) baseTag;
             ResourceLocation dimension = ResourceLocation.parse(dimensionTag.getString("dimension"));
-
-            // 修复：使用线程安全的Set
             Set<WireConnection> dimConnections = ConcurrentHashMap.newKeySet();
-            ListTag connectionsList = dimensionTag.getList("connections", Tag.TAG_COMPOUND);
-            for (int j = 0; j < connectionsList.size(); j++) {
-                WireConnection connection = WireConnection.load(connectionsList.getCompound(j));
-                dimConnections.add(connection);
-                manager.updatePositionIndex(dimension, connection, true);
-            }
+            Set<WireConnection> activeSet = ConcurrentHashMap.newKeySet();
+
+            loadConnectionsList(dimensionTag.getList("connections", Tag.TAG_COMPOUND), dimConnections, manager, dimension);
+            loadConnectionsList(dimensionTag.getList("activeConnections", Tag.TAG_COMPOUND), activeSet, null, null);
 
             manager.connections.put(dimension, dimConnections);
+            manager.activeConnections.put(dimension, activeSet);
         }
 
+        ModernFurniture.LOGGER.info("WireNetworkManager loaded successfully");
         return manager;
     }
 
+    // 批量加载连接数据
+    private static void loadConnectionsList(ListTag list, Set<WireConnection> targetSet, WireNetworkManager manager, ResourceLocation dimension) {
+        for (int j = 0; j < list.size(); j++) {
+            WireConnection connection = WireConnection.load(list.getCompound(j));
+            targetSet.add(connection);
+            if (manager != null && dimension != null) {
+                manager.updatePositionIndex(dimension, connection, true);
+            }
+        }
+    }
+
+    // 判断玩家是否在同一维度
     public static boolean isInSameDimension(Level level, ServerPlayer player) {
         return player.level().dimension().equals(level.dimension());
     }
 
-    /**
-     * 添加连接
-     */
+    // 添加连接
     public boolean addConnection(Level level, BlockPos pos1, BlockPos pos2) {
         if (level.isClientSide) return false;
 
         ResourceLocation dimension = level.dimension().location();
         WireConnection connection = new WireConnection(pos1, pos2, dimension);
-
-        // 检查连接是否已存在
-        // 修复：使用线程安全的Set
         Set<WireConnection> dimConnections = connections.computeIfAbsent(dimension, k -> ConcurrentHashMap.newKeySet());
-        if (dimConnections.contains(connection)) {
-            return false;
-        }
 
-        // 验证连接的有效性
-        if (!validateConnection(level, pos1, pos2)) {
-            return false;
-        }
+        if (!dimConnections.add(connection) || !validateConnection(level, pos1, pos2)) return false;
 
-        // 添加连接
-        dimConnections.add(connection);
-
-        // 更新位置索引
         updatePositionIndex(dimension, connection, true);
-
-        // 尝试激活连接
         tryActivateConnection(level, connection);
+        syncAllToDimension(level);
+        markDirty(level);
 
-        // 同步到所有在线玩家
-        if (level instanceof ServerLevel serverLevel) {
-            for (ServerPlayer player : serverLevel.getServer().getPlayerList().getPlayers()) {
-                if (isInSameDimension(serverLevel, player)) {
-                    syncToClient(serverLevel, player);
-                }
-            }
-        }
-
-        setDirty();
         ModernFurniture.LOGGER.info("Added wire connection: {}", connection);
         return true;
     }
 
-    /**
-     * 移除连接
-     */
+    // 移除连接
     public boolean removeConnection(Level level, BlockPos pos1, BlockPos pos2) {
         if (level.isClientSide) return false;
 
         ResourceLocation dimension = level.dimension().location();
         WireConnection connection = new WireConnection(pos1, pos2, dimension);
-
         Set<WireConnection> dimConnections = connections.get(dimension);
-        if (dimConnections == null || !dimConnections.contains(connection)) {
-            return false;
-        }
+        if (dimConnections == null || !dimConnections.remove(connection)) return false;
 
-        // 停用连接
         deactivateConnection(level, connection);
-
-        // 移除连接
-        dimConnections.remove(connection);
-
-        // 更新位置索引
         updatePositionIndex(dimension, connection, false);
+        syncAllToDimension(level);
+        markDirty(level);
 
-        setDirty();
         ModernFurniture.LOGGER.info("Removed wire connection: {}", connection);
         return true;
     }
 
-    /**
-     * 移除指定位置的所有连接
-     */
+    // 移除指定位置的所有连接
     public void removeAllConnections(Level level, BlockPos pos) {
         if (level.isClientSide) return;
-
         ResourceLocation dimension = level.dimension().location();
-        Set<WireConnection> posConnections = getConnectionsAt(dimension, pos);
-
-        for (WireConnection connection : Set.copyOf(posConnections)) {
-            BlockPos otherPos = connection.getOtherEnd(pos);
-            if (otherPos != null) {
-                removeConnection(level, pos, otherPos);
-            }
-        }
+        getConnectionsAt(dimension, pos).forEach(conn -> removeConnection(level, pos, conn.getOtherEnd(pos)));
     }
 
-    /**
-     * 尝试激活连接
-     */
+    // 尝试激活连接
     public void tryActivateConnection(Level level, WireConnection connection) {
-        if (level.isClientSide) return;
+        if (level.isClientSide || !level.isLoaded(connection.pos1()) || !level.isLoaded(connection.pos2())) return;
 
-        ResourceLocation dimension = level.dimension().location();
-
-        // 检查两端区块是否都已加载
-        if (!level.isLoaded(connection.pos1()) || !level.isLoaded(connection.pos2())) {
-            return;
-        }
-
-        // 检查两端设备是否存在且可连接
         BlockEntity be1 = level.getBlockEntity(connection.pos1());
         BlockEntity be2 = level.getBlockEntity(connection.pos2());
 
-        if (!(be1 instanceof WireConnectable device1) || !(be2 instanceof WireConnectable device2)) {
-            return;
-        }
+        if (!(be1 instanceof WireConnectable d1) || !(be2 instanceof WireConnectable d2)) return;
+        if (!d1.getConnectionType().canConnectTo(d2.getConnectionType())) return;
 
-        // 检查连接类型兼容性
-        if (!device1.getConnectionType().canConnectTo(device2.getConnectionType())) {
-            return;
-        }
-
-        // 激活连接
-        Set<WireConnection> activeSet = activeConnections.computeIfAbsent(dimension, k -> ConcurrentHashMap.newKeySet());
+        Set<WireConnection> activeSet = activeConnections.computeIfAbsent(connection.dimension(), k -> ConcurrentHashMap.newKeySet());
         if (activeSet.add(connection)) {
-            device1.onConnectionActivated(level, connection.pos1(), connection.pos2());
-            device2.onConnectionActivated(level, connection.pos2(), connection.pos1());
+            d1.onConnectionActivated(level, connection.pos1(), connection.pos2());
+            d2.onConnectionActivated(level, connection.pos2(), connection.pos1());
             ModernFurniture.LOGGER.debug("Activated wire connection: {}", connection);
         }
     }
 
-    /**
-     * 停用连接
-     */
+    // 停用连接
     public void deactivateConnection(Level level, WireConnection connection) {
         if (level.isClientSide) return;
-
-        ResourceLocation dimension = level.dimension().location();
-        Set<WireConnection> activeSet = activeConnections.get(dimension);
-
+        Set<WireConnection> activeSet = activeConnections.get(connection.dimension());
         if (activeSet != null && activeSet.remove(connection)) {
-            // 通知设备连接已停用
-            BlockEntity be1 = level.getBlockEntity(connection.pos1());
-            BlockEntity be2 = level.getBlockEntity(connection.pos2());
-
-            if (be1 instanceof WireConnectable) {
-                ((WireConnectable) be1).onConnectionDeactivated(level, connection.pos1(), connection.pos2());
-            }
-            if (be2 instanceof WireConnectable) {
-                ((WireConnectable) be2).onConnectionDeactivated(level, connection.pos2(), connection.pos1());
-            }
-
+            deactivateNotify(level, connection);
             ModernFurniture.LOGGER.debug("Deactivated wire connection: {}", connection);
         }
     }
 
-    /**
-     * 当区块加载时调用
-     */
+    // 通知设备断开连接
+    private void deactivateNotify(Level level, WireConnection conn) {
+        BlockEntity be1 = level.getBlockEntity(conn.pos1());
+        BlockEntity be2 = level.getBlockEntity(conn.pos2());
+        if (be1 instanceof WireConnectable d1) d1.onConnectionDeactivated(level, conn.pos1(), conn.pos2());
+        if (be2 instanceof WireConnectable d2) d2.onConnectionDeactivated(level, conn.pos2(), conn.pos1());
+    }
+
+    // 区块加载时尝试激活相关连接
     public void onChunkLoaded(Level level, BlockPos chunkPos) {
         if (level.isClientSide) return;
-
-        ResourceLocation dimension = level.dimension().location();
-        Set<WireConnection> dimConnections = connections.get(dimension);
-        if (dimConnections == null) return;
-
-        // 查找涉及该区块的连接
-        for (WireConnection connection : dimConnections) {
-            if (isInChunk(connection.pos1(), chunkPos) || isInChunk(connection.pos2(), chunkPos)) {
-                tryActivateConnection(level, connection);
-            }
+        Set<WireConnection> dimConnections = connections.get(level.dimension().location());
+        if (dimConnections != null) {
+            dimConnections.stream()
+                    .filter(c -> isInChunk(c.pos1(), chunkPos) || isInChunk(c.pos2(), chunkPos))
+                    .forEach(c -> tryActivateConnection(level, c));
         }
     }
 
-    /**
-     * 当区块卸载时调用
-     */
+    // 区块卸载时停用相关连接
     public void onChunkUnloaded(Level level, BlockPos chunkPos) {
         if (level.isClientSide) return;
-
-        ResourceLocation dimension = level.dimension().location();
-        Set<WireConnection> activeSet = activeConnections.get(dimension);
-        if (activeSet == null) return;
-
-        // 停用涉及该区块的连接
-        for (WireConnection connection : new HashSet<>(activeSet)) {
-            if (isInChunk(connection.pos1(), chunkPos) || isInChunk(connection.pos2(), chunkPos)) {
-                deactivateConnection(level, connection);
-            }
+        Set<WireConnection> activeSet = activeConnections.get(level.dimension().location());
+        if (activeSet != null) {
+            activeSet.stream()
+                    .filter(c -> isInChunk(c.pos1(), chunkPos) || isInChunk(c.pos2(), chunkPos))
+                    .forEach(c -> deactivateConnection(level, c));
         }
     }
 
-    /**
-     * 获取指定位置的所有连接
-     */
+    // 获取指定位置的所有连接
     public Set<WireConnection> getConnectionsAt(ResourceLocation dimension, BlockPos pos) {
-        Map<BlockPos, Set<WireConnection>> dimIndex = positionIndex.get(dimension);
-        if (dimIndex == null) return Collections.emptySet();
-
-        Set<WireConnection> result = dimIndex.get(pos);
-        return result != null ? new HashSet<>(result) : Collections.emptySet();
+        return new HashSet<>(positionIndex.getOrDefault(dimension, Map.of()).getOrDefault(pos, Set.of()));
     }
 
-    /**
-     * 检查连接是否激活
-     */
+    // 判断连接是否激活
     public boolean isConnectionActive(ResourceLocation dimension, WireConnection connection) {
-        Set<WireConnection> activeSet = activeConnections.get(dimension);
-        return activeSet != null && activeSet.contains(connection);
+        return activeConnections.getOrDefault(dimension, Set.of()).contains(connection);
     }
 
-
-    /**
-     * 获取所有连接（用于渲染）
-     */
+    // 获取所有连接
     public Set<WireConnection> getAllConnections(ResourceLocation dimension) {
-        Set<WireConnection> dimConnections = connections.get(dimension);
-        return dimConnections != null ? new HashSet<>(dimConnections) : Collections.emptySet();
+        return new HashSet<>(connections.getOrDefault(dimension, Set.of()));
     }
 
+    // 校验连接是否合法
     private boolean validateConnection(Level level, BlockPos pos1, BlockPos pos2) {
         BlockEntity be1 = level.getBlockEntity(pos1);
         BlockEntity be2 = level.getBlockEntity(pos2);
-
-        if (!(be1 instanceof WireConnectable device1) || !(be2 instanceof WireConnectable device2)) {
-            return false;
-        }
-
-        return device1.canConnectTo(level, pos1, pos2) &&
-                device2.canConnectTo(level, pos2, pos1) &&
-                device1.getConnectionType().canConnectTo(device2.getConnectionType());
+        return be1 instanceof WireConnectable d1 && be2 instanceof WireConnectable d2 &&
+                d1.canConnectTo(level, pos1, pos2) &&
+                d2.canConnectTo(level, pos2, pos1) &&
+                d1.getConnectionType().canConnectTo(d2.getConnectionType());
     }
 
-    private void updatePositionIndex(ResourceLocation dimension, WireConnection connection, boolean add) {
+    // 更新连接在位置索引中的信息
+    private void updatePositionIndex(ResourceLocation dimension, WireConnection conn, boolean add) {
         Map<BlockPos, Set<WireConnection>> dimIndex = positionIndex.computeIfAbsent(dimension, k -> new ConcurrentHashMap<>());
+        updateSingleIndex(dimIndex, conn.pos1(), conn, add);
+        updateSingleIndex(dimIndex, conn.pos2(), conn, add);
+    }
 
+    // 单点索引更新
+    private void updateSingleIndex(Map<BlockPos, Set<WireConnection>> index, BlockPos pos, WireConnection conn, boolean add) {
+        Set<WireConnection> set = index.computeIfAbsent(pos, k -> ConcurrentHashMap.newKeySet());
         if (add) {
-            dimIndex.computeIfAbsent(connection.pos1(), k -> ConcurrentHashMap.newKeySet()).add(connection);
-            dimIndex.computeIfAbsent(connection.pos2(), k -> ConcurrentHashMap.newKeySet()).add(connection);
+            set.add(conn);
         } else {
-            Set<WireConnection> set1 = dimIndex.get(connection.pos1());
-            if (set1 != null) {
-                set1.remove(connection);
-                if (set1.isEmpty()) dimIndex.remove(connection.pos1());
-            }
-
-            Set<WireConnection> set2 = dimIndex.get(connection.pos2());
-            if (set2 != null) {
-                set2.remove(connection);
-                if (set2.isEmpty()) dimIndex.remove(connection.pos2());
-            }
+            set.remove(conn);
+            if (set.isEmpty()) index.remove(pos);
         }
     }
 
-    // 数据持久化
-
+    // 判断位置是否处于指定区块内
     private boolean isInChunk(BlockPos blockPos, BlockPos chunkPos) {
-        int chunkX = chunkPos.getX() >> 4;
-        int chunkZ = chunkPos.getZ() >> 4;
-        int blockChunkX = blockPos.getX() >> 4;
-        int blockChunkZ = blockPos.getZ() >> 4;
-        return chunkX == blockChunkX && chunkZ == blockChunkZ;
+        return (blockPos.getX() >> 4) == (chunkPos.getX() >> 4) && (blockPos.getZ() >> 4) == (chunkPos.getZ() >> 4);
+    }
+
+    // 标记数据脏并保存
+    private void markDirty(Level level) {
+        setDirty();
+        if (level instanceof ServerLevel serverLevel) serverLevel.getDataStorage().save();
+    }
+
+    // 同步当前维度所有连接到所有在线玩家
+    private void syncAllToDimension(Level level) {
+        if (!(level instanceof ServerLevel serverLevel)) return;
+        ResourceLocation dim = level.dimension().location();
+        Set<WireConnection> connSet = getAllConnections(dim);
+        for (ServerPlayer player : serverLevel.getServer().getPlayerList().getPlayers()) {
+            if (isInSameDimension(serverLevel, player)) {
+                NetworkHandler.sendToClient(new WireSyncPacket(dim, connSet), player);
+            }
+        }
     }
 
     @Override
     public CompoundTag save(CompoundTag tag) {
         ListTag dimensionsList = new ListTag();
-
         for (Map.Entry<ResourceLocation, Set<WireConnection>> entry : connections.entrySet()) {
-            CompoundTag dimensionTag = new CompoundTag();
-            dimensionTag.putString("dimension", entry.getKey().toString());
-
-            ListTag connectionsList = new ListTag();
-            for (WireConnection connection : entry.getValue()) {
-                connectionsList.add(connection.save());
-            }
-            dimensionTag.put("connections", connectionsList);
-
-            dimensionsList.add(dimensionTag);
+            CompoundTag dimTag = new CompoundTag();
+            dimTag.putString("dimension", entry.getKey().toString());
+            dimTag.put("connections", saveConnectionList(entry.getValue()));
+            dimTag.put("activeConnections", saveConnectionList(activeConnections.getOrDefault(entry.getKey(), Set.of())));
+            dimensionsList.add(dimTag);
         }
-
         tag.put("dimensions", dimensionsList);
         return tag;
     }
 
-    /**
-     * 同步连接到客户端
-     */
-    public void syncToClient(ServerLevel level, Player player) {
-        ResourceLocation dimension = level.dimension().location();
-        Set<WireConnection> connections = getAllConnections(dimension);
-
-        NetworkHandler.sendToClient(
-                new WireSyncPacket(dimension, connections),
-                (ServerPlayer) player
-        );
+    private ListTag saveConnectionList(Set<WireConnection> connections) {
+        ListTag list = new ListTag();
+        connections.forEach(conn -> list.add(conn.save()));
+        return list;
     }
 
-    /**
-     * 当玩家加入世界时同步所有连接
-     */
+    // 玩家加入时同步所有维度连接数据
     public void syncAllToClient(ServerLevel level, Player player) {
-        for (Map.Entry<ResourceLocation, Set<WireConnection>> entry : connections.entrySet()) {
-            NetworkHandler.sendToClient(
-                    new WireSyncPacket(entry.getKey(), entry.getValue()),
-                    (ServerPlayer) player
-            );
+        connections.forEach((dim, connSet) ->
+                NetworkHandler.sendToClient(new WireSyncPacket(dim, connSet), (ServerPlayer) player));
+    }
+
+    // 世界加载完成后重新验证并激活所有连接
+    public void revalidateAllConnections(ServerLevel level) {
+        ResourceLocation dim = level.dimension().location();
+        Set<WireConnection> activeSet = activeConnections.get(dim);
+
+        if (activeSet == null || activeSet.isEmpty()) {
+            getAllConnections(dim).forEach(c -> tryActivateConnection(level, c));
+            return;
         }
+
+        for (WireConnection conn : new HashSet<>(activeSet)) {
+            if (!level.isLoaded(conn.pos1()) || !level.isLoaded(conn.pos2())) {
+                activeSet.remove(conn);
+                continue;
+            }
+            BlockEntity be1 = level.getBlockEntity(conn.pos1());
+            BlockEntity be2 = level.getBlockEntity(conn.pos2());
+            if (be1 instanceof WireConnectable d1 && be2 instanceof WireConnectable d2) {
+                if (!d1.getConnectionType().canConnectTo(d2.getConnectionType())) {
+                    activeSet.remove(conn);
+                    continue;
+                }
+                d1.onConnectionActivated(level, conn.pos1(), conn.pos2());
+                d2.onConnectionActivated(level, conn.pos2(), conn.pos1());
+                level.sendBlockUpdated(conn.pos1(), level.getBlockState(conn.pos1()), level.getBlockState(conn.pos1()), 3);
+                level.sendBlockUpdated(conn.pos2(), level.getBlockState(conn.pos2()), level.getBlockState(conn.pos2()), 3);
+            } else {
+                activeSet.remove(conn);
+            }
+        }
+        setDirty();
     }
 }

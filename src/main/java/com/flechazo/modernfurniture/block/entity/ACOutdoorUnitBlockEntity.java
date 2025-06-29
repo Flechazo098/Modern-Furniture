@@ -86,11 +86,6 @@ public class ACOutdoorUnitBlockEntity extends AbstractAnimatableBlockEntity impl
     @Override
     public void setRemoved() {
         super.setRemoved();
-        // 清理所有连接
-        if (level instanceof ServerLevel serverLevel) {
-            WireNetworkManager manager = WireNetworkManager.get(serverLevel);
-            manager.removeAllConnections(level, worldPosition);
-        }
     }
 
     @Override

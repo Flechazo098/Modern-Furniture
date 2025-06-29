@@ -106,12 +106,6 @@ public abstract class AbstractAirConditioningBlockEntity extends AbstractAnimata
             }
             snowManager = null;
         }
-
-        // 清理所有连接
-        if (level instanceof ServerLevel serverLevel) {
-            WireNetworkManager manager = WireNetworkManager.get(serverLevel);
-            manager.removeAllConnections(level, worldPosition);
-        }
     }
 
     @Override
@@ -176,9 +170,18 @@ public abstract class AbstractAirConditioningBlockEntity extends AbstractAnimata
     private void checkInitialConnection(ServerLevel serverLevel) {
         WireNetworkManager manager = WireNetworkManager.get(serverLevel);
         Set<WireConnection> connections = manager.getConnectionsAt(serverLevel.dimension().location(), worldPosition);
+
+        // 区块加载检查
+        if (!serverLevel.isLoaded(worldPosition)) {
+            hasValidConnection = false;
+            return;
+        }
+
         if (!connections.isEmpty()) {
             WireConnection connection = connections.iterator().next();
-            if (manager.isConnectionActive(serverLevel.dimension().location(), connection)) {
+            // 连接有效性验证
+            if (manager.isConnectionActive(serverLevel.dimension().location(), connection)
+                    && serverLevel.isLoaded(connection.getOtherEnd(worldPosition))) {
                 onConnectionActivated(serverLevel, worldPosition, connection.getOtherEnd(worldPosition));
             }
         }

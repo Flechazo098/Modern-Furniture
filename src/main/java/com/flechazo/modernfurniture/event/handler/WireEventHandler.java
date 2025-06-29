@@ -19,7 +19,7 @@ public class WireEventHandler {
                     WireNetworkManager manager = WireNetworkManager.get(level);
 
                     // 只同步当前维度的连接，而不是所有维度
-                    manager.syncToClient(level, player);
+                    manager.syncAllToClient(level, player);
                 } catch (Exception e) {
                     ModernFurniture.LOGGER.error("Failed to sync wire connections to player: {}", player.getName().getString(), e);
                 }
@@ -37,7 +37,7 @@ public class WireEventHandler {
                     WireNetworkManager manager = WireNetworkManager.get(level);
 
                     // 同步当前维度的电线连接
-                    manager.syncToClient(level, player);
+                    manager.syncAllToClient(level, player);
                 } catch (Exception e) {
                     ModernFurniture.LOGGER.error("Failed to sync wire connections during dimension change for player: {}", player.getName().getString(), e);
                 }

@@ -2,43 +2,56 @@ package com.flechazo.modernfurniture.network.module;
 
 import com.flechazo.modernfurniture.client.gui.ConfigScreen;
 import com.flechazo.modernfurniture.config.ConfigManager;
+import com.flechazo.modernfurniture.network.NetworkHandler;
 import com.flechazo.modernfurniture.network.PacketHandler;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.network.NetworkEvent;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
 public class ConfigPacket extends PacketHandler.AbstractPacket {
     private final Map<String, Object> configData = new HashMap<>();
-    private Type packetType;
-    public ConfigPacket(Type type) {
-        this.packetType = type;
-    }
+    private int type;
 
-    public static ConfigPacket createForSync() {
-        ConfigPacket packet = new ConfigPacket(Type.SYNC_TO_CLIENT);
-        packet.configData.putAll(ConfigManager.getCurrentConfigValues());
-        return packet;
+    public ConfigPacket(int type) {
+        this.type = type;
     }
 
     public static ConfigPacket createForUpdate(Map<String, Object> serverConfig) {
-        ConfigPacket packet = new ConfigPacket(Type.UPDATE_CONFIG);
+        ConfigPacket packet = new ConfigPacket(0b0000);
         packet.configData.putAll(serverConfig);
         return packet;
     }
 
-    public static ConfigPacket createForReset() {
-        return new ConfigPacket(Type.RESET_TO_DEFAULTS);
+    public static ConfigPacket createForSync(Map<ForgeConfigSpec.ConfigValue, Field> map) {
+        ConfigPacket packet = new ConfigPacket(0b0001);
+        map.forEach((configValue, field) -> {
+            packet.configData.put(field.getName(), configValue.get());
+        });
+        return packet;
+    }
+
+    public static ConfigPacket reSyncRequest() {
+        return new ConfigPacket(0b0010);
+    }
+
+    public static ConfigPacket reSyncResponse(Map<String, Object> config) {
+        ConfigPacket packet = new ConfigPacket(0b0011);
+        packet.configData.putAll(config);
+        return packet;
     }
 
     @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeInt(packetType.getId());
+        buf.writeInt(type);
         buf.writeInt(configData.size());
 
         configData.forEach((key, value) -> {
@@ -49,62 +62,57 @@ public class ConfigPacket extends PacketHandler.AbstractPacket {
 
     private void encodeValue(FriendlyByteBuf buf, Object value) {
         if (value instanceof Boolean) {
-            buf.writeByte(0);
+            buf.writeByte(0); // 类型标记: boolean
             buf.writeBoolean((Boolean) value);
         } else if (value instanceof Integer) {
-            buf.writeByte(1);
+            buf.writeByte(1); // 类型标记: int
             buf.writeInt((Integer) value);
         } else if (value instanceof Long) {
-            buf.writeByte(2);
+            buf.writeByte(2); // 类型标记: long
             buf.writeLong((Long) value);
         } else if (value instanceof Float) {
-            buf.writeByte(3);
+            buf.writeByte(3); // 类型标记: float
             buf.writeFloat((Float) value);
         } else if (value instanceof Double) {
-            buf.writeByte(4);
+            buf.writeByte(4); // 类型标记: double
             buf.writeDouble((Double) value);
         } else if (value instanceof String) {
-            buf.writeByte(5);
+            buf.writeByte(5); // 类型标记: string
             buf.writeUtf((String) value);
-        } else {
-            throw new IllegalArgumentException("Unsupported config value type: " + value.getClass());
         }
     }
 
     @Override
     public void decode(FriendlyByteBuf buf) {
-        packetType = Type.fromId(buf.readInt());
+        type = buf.readInt();
         int size = buf.readInt();
 
         configData.clear();
 
         for (int i = 0; i < size; i++) {
             String key = buf.readUtf();
-            Object value = decodeValue(buf);
-            configData.put(key, value);
-        }
-    }
+            byte type = buf.readByte();
 
-    private Object decodeValue(FriendlyByteBuf buf) {
-        byte typeId = buf.readByte();
-        return switch (typeId) {
-            case 0 -> buf.readBoolean();
-            case 1 -> buf.readInt();
-            case 2 -> buf.readLong();
-            case 3 -> buf.readFloat();
-            case 4 -> buf.readDouble();
-            case 5 -> buf.readUtf();
-            default -> throw new IllegalArgumentException("Unknown config type: " + typeId);
-        };
+            switch (type) {
+                case 0 -> configData.put(key, buf.readBoolean());
+                case 1 -> configData.put(key, buf.readInt());
+                case 2 -> configData.put(key, buf.readLong());
+                case 3 -> configData.put(key, buf.readFloat());
+                case 4 -> configData.put(key, buf.readDouble());
+                case 5 -> configData.put(key, buf.readUtf());
+                default -> throw new IllegalArgumentException("Unknown config type: " + type);
+            }
+        }
     }
 
     @Override
     public void handle(Supplier<NetworkEvent.Context> context) {
         context.get().enqueueWork(() -> {
-            switch (packetType) {
-                case SYNC_TO_CLIENT -> handleClientSide();
-                case UPDATE_CONFIG -> handleServerSide(context);
-                case RESET_TO_DEFAULTS -> handleResetToDefaults(context);
+            if (type == -1) return;
+            if (type % 2 == 1) {
+                handleClientSide();
+            } else if (type % 2 == 0) {
+                handleServerSide(context);
             }
         });
         context.get().setPacketHandled(true);
@@ -114,76 +122,25 @@ public class ConfigPacket extends PacketHandler.AbstractPacket {
         ServerPlayer player = context.get().getSender();
         if (player == null) {
             return;
-        }
-
-        if (!player.hasPermissions(2)) {
+        } else if (!player.hasPermissions(2)) {
             player.sendSystemMessage(Component.literal("You don't have permission to update the config"));
             return;
         }
-
-        if (!ConfigManager.isConfigLoaded()) {
-            player.sendSystemMessage(Component.literal("Config has not been loaded yet, please try again later"));
-            return;
-        }
-
-        try {
+        if ((type >> 1) % 2 == 0) {
             ConfigManager.syncValue(configData, true);
-            player.sendSystemMessage(Component.literal("Config has been reset to default and saved to file"));
-        } catch (Exception e) {
-            player.sendSystemMessage(Component.literal("Config reset failed: " + e.getMessage()));
-        }
-    }
-
-    private void handleResetToDefaults(Supplier<NetworkEvent.Context> context) {
-        ServerPlayer player = context.get().getSender();
-        if (player == null) {
-            return;
-        }
-
-        if (!player.hasPermissions(2)) {
-            player.sendSystemMessage(Component.literal("You don't have permission to reset the config"));
-            return;
-        }
-
-        if (!ConfigManager.isConfigLoaded()) {
-            player.sendSystemMessage(Component.literal("Config has not been loaded yet, please try again later"));
-            return;
-        }
-
-        try {
-            ConfigManager.resetToDefaults();
-            player.sendSystemMessage(Component.literal("Config has been reset to default and saved to file"));
-        } catch (Exception e) {
-            player.sendSystemMessage(Component.literal("Config reset failed: " + e.getMessage()));
+        } else {
+            NetworkHandler.sendToClient(reSyncResponse(ConfigManager.defaultValues), player);
         }
     }
 
     private void handleClientSide() {
-        Minecraft.getInstance().setScreen(new ConfigScreen(configData));
-    }
-
-    public enum Type {
-        SYNC_TO_CLIENT(1),
-        UPDATE_CONFIG(2),
-        RESET_TO_DEFAULTS(3);
-
-        private final int id;
-
-        Type(int id) {
-            this.id = id;
-        }
-
-        public static Type fromId(int id) {
-            for (Type type : values()) {
-                if (type.id == id) {
-                    return type;
-                }
+        if ((type >> 1) % 2 == 0) {
+            Minecraft.getInstance().setScreen(new ConfigScreen(configData));
+        } else {
+            Screen screen = Minecraft.getInstance().screen;
+            if (screen instanceof ConfigScreen) {
+                ((ConfigScreen) screen).updateConfig(configData);
             }
-            throw new IllegalArgumentException("Unknown packet type: " + id);
-        }
-
-        public int getId() {
-            return id;
         }
     }
 }

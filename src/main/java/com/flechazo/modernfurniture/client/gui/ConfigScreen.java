@@ -15,6 +15,19 @@ import java.util.List;
 import java.util.Map;
 
 public class ConfigScreen extends Screen {
+    // Stores widget references for current page
+    private final Map<String, AbstractWidget> configWidgets = new HashMap<>();
+    // Stores modified configuration values across pages
+    private final Map<String, Object> modifiedConfigCache = new HashMap<>();
+    // Original configuration entries
+    private List<Map.Entry<String, Object>> configEntries;
+
+    // Pagination variables
+    private int currentPage = 0;
+    private int itemsPerPage = 0;
+    private int totalPages = 0;
+    private int panelHeight = 0;
+
     // UI layout constants
     private static final int ITEM_HEIGHT = 25;
     private static final int MARGIN = 10;
@@ -24,17 +37,6 @@ public class ConfigScreen extends Screen {
     private static final int BUTTON_HEIGHT = 20;
     private static final int PANEL_TOP = 30;
     private static final int PANEL_BOTTOM_MARGIN = 50;
-    // Stores widget references for current page
-    private final Map<String, AbstractWidget> configWidgets = new HashMap<>();
-    // Stores modified configuration values across pages
-    private final Map<String, Object> modifiedConfigCache = new HashMap<>();
-    // Original configuration entries
-    private final List<Map.Entry<String, Object>> configEntries;
-    // Pagination variables
-    private int currentPage = 0;
-    private int itemsPerPage = 0;
-    private int totalPages = 0;
-    private int panelHeight = 0;
 
     public ConfigScreen(Map<String, Object> serverConfig) {
         super(Component.literal("Modern Furniture Config"));
@@ -65,6 +67,7 @@ public class ConfigScreen extends Screen {
                         Component.translatable("config.modern_furniture.prev"),
                         button -> {
                             if (currentPage > 0) {
+                                // Save current page changes before switching
                                 saveCurrentPageChanges();
                                 currentPage--;
                                 clearWidgets();
@@ -89,6 +92,7 @@ public class ConfigScreen extends Screen {
                         Component.translatable("config.modern_furniture.next"),
                         button -> {
                             if (currentPage < totalPages - 1) {
+                                // Save current page changes before switching
                                 saveCurrentPageChanges();
                                 currentPage++;
                                 clearWidgets();
@@ -124,56 +128,13 @@ public class ConfigScreen extends Screen {
         );
     }
 
-    private void saveCurrentPageChanges() {
-        for (Map.Entry<String, AbstractWidget> entry : configWidgets.entrySet()) {
-            String key = entry.getKey();
-            AbstractWidget widget = entry.getValue();
-            Object originalValue = getOriginalValue(key);
-
-            if (widget instanceof Checkbox checkbox) {
-                boolean currentValue = checkbox.selected();
-                if (originalValue instanceof Boolean && (Boolean) originalValue != currentValue) {
-                    modifiedConfigCache.put(key, currentValue);
-                }
-            } else if (widget instanceof ForgeSlider slider) {
-                if (originalValue instanceof Integer) {
-                    int currentValue = (int) slider.getValue();
-                    if ((Integer) originalValue != currentValue) {
-                        modifiedConfigCache.put(key, currentValue);
-                    }
-                } else if (originalValue instanceof Long) {
-                    long currentValue = (long) slider.getValue();
-                    if ((Long) originalValue != currentValue) {
-                        modifiedConfigCache.put(key, currentValue);
-                    }
-                } else if (originalValue instanceof Double) {
-                    double currentValue = slider.getValue();
-                    if (Math.abs((Double) originalValue - currentValue) > 0.0001) {
-                        modifiedConfigCache.put(key, currentValue);
-                    }
-                } else if (originalValue instanceof Float) {
-                    float currentValue = (float) slider.getValue();
-                    if (Math.abs((Float) originalValue - currentValue) > 0.0001f) {
-                        modifiedConfigCache.put(key, currentValue);
-                    }
-                }
-            } else if (widget instanceof EditBox editBox) {
-                String currentValue = editBox.getValue();
-                if (originalValue instanceof String && !originalValue.equals(currentValue)) {
-                    modifiedConfigCache.put(key, currentValue);
-                }
-            }
-        }
-    }
-
     private void resetToDefaults() {
         // 清空修改缓存
         modifiedConfigCache.clear();
 
         // 发送重置请求到服务器
-        ConfigPacket packet = ConfigPacket.createForReset();
+        ConfigPacket packet = ConfigPacket.reSyncRequest();
         NetworkHandler.sendToServer(packet);
-        onClose();
     }
 
     private void createPageWidgets() {
@@ -277,6 +238,38 @@ public class ConfigScreen extends Screen {
     }
 
     /**
+     * Saves current page widget values to cache only if they differ from original
+     * Called before page navigation
+     */
+    private void saveCurrentPageChanges() {
+        for (Map.Entry<String, AbstractWidget> entry : configWidgets.entrySet()) {
+            String key = entry.getKey();
+            AbstractWidget widget = entry.getValue();
+            Object originalValue = getOriginalValue(key);
+
+            if (widget instanceof Checkbox checkbox) {
+                boolean currentValue = checkbox.selected();
+                if (originalValue instanceof Boolean && (Boolean) originalValue != currentValue) {
+                    modifiedConfigCache.put(key, currentValue);
+                }
+            } else if (widget instanceof ForgeSlider slider) {
+                Number currentValue = slider.getValue();
+                if (originalValue instanceof Number) {
+                    Number original = (Number) originalValue;
+                    if (Math.abs(original.doubleValue() - currentValue.doubleValue()) > 0.0001) {
+                        modifiedConfigCache.put(key, ConfigManager.tryParse(originalValue.getClass(), currentValue));
+                    }
+                }
+            } else if (widget instanceof EditBox editBox) {
+                String currentValue = editBox.getValue();
+                if (originalValue instanceof String && !originalValue.equals(currentValue)) {
+                    modifiedConfigCache.put(key, currentValue);
+                }
+            }
+        }
+    }
+
+    /**
      * Gets the original value for a configuration key
      */
     private Object getOriginalValue(String key) {
@@ -302,5 +295,27 @@ public class ConfigScreen extends Screen {
         ConfigPacket packet = ConfigPacket.createForUpdate(modifiedConfigCache);
         NetworkHandler.sendToServer(packet);
         onClose();
+    }
+
+    public void updateConfig(Map<String, Object> configData) {
+        applyData(configData);
+        clearWidgets();
+        init();
+    }
+
+    public void applyData(Map<String, Object> configData) {
+        configData.forEach((key, value) -> {
+            Object originalValue = getOriginalValue(key);
+            if (originalValue instanceof Boolean && value instanceof Boolean && originalValue != value) {
+                modifiedConfigCache.put(key, value);
+            } else if (originalValue instanceof Number && value instanceof Number) {
+                double original = ((Number) originalValue).doubleValue();
+                if (Math.abs(original - ((Number) value).doubleValue()) > 0.0001) {
+                    modifiedConfigCache.put(key, value);
+                }
+            } else if (originalValue instanceof String && value instanceof String && !originalValue.equals(value)) {
+                modifiedConfigCache.put(key, value);
+            }
+        });
     }
 }

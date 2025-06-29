@@ -14,5 +14,10 @@
     "item.modern_furniture.wire_connector.not_connectable": "该方块不可连接。",
     "item.modern_furniture.wire_connector.connected": "设备已成功连接。",
     "item.modern_furniture.wire_connector.connection_failed": "连接失败。",
-    "item.modern_furniture.wire_connector.first_pos": "第一个位置: (%s, %s, %s)"
+    "item.modern_furniture.wire_connector.first_pos": "第一个位置: (%s, %s, %s)",
+    "config.modern_furniture.prev": "<< 上一页",
+    "config.modern_furniture.next": "下一页 >>",
+    "config.modern_furniture.save": "保存",
+    "config.modern_furniture.reset_default": "恢复默认",
+    "config.modern_furniture.cancel": "取消"
 }

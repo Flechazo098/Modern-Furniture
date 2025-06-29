@@ -11,7 +11,7 @@ public class NetworkHandler {
         @Override
         public void registerPackets() {
             registerPacket(ConfigPacket.class, ConfigPacket::encode, buf -> {
-                        ConfigPacket packet = new ConfigPacket(0);
+                        ConfigPacket packet = new ConfigPacket(ConfigPacket.Type.SYNC_TO_CLIENT);
                         packet.decode(buf);
                         return packet;
                     },

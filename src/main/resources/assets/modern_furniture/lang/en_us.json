@@ -14,5 +14,10 @@
     "item.modern_furniture.wire_connector.not_connectable": "This block cannot be connected.",
     "item.modern_furniture.wire_connector.connected": "Devices connected successfully.",
     "item.modern_furniture.wire_connector.connection_failed": "Connection failed.",
-    "item.modern_furniture.wire_connector.first_pos": "First position: (%s, %s, %s)"
+    "item.modern_furniture.wire_connector.first_pos": "First position: (%s, %s, %s)",
+    "config.modern_furniture.prev": "<< Prev",
+    "config.modern_furniture.next": "Next >>",
+    "config.modern_furniture.save": "Save",
+    "config.modern_furniture.reset_default": "Reset Default",
+    "config.modern_furniture.cancel": "Cancel"
 }

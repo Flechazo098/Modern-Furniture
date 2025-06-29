@@ -68,6 +68,10 @@ public class WireNetworkManager extends SavedData {
         return manager;
     }
 
+    public static boolean isInSameDimension(Level level, ServerPlayer player) {
+        return player.level().dimension().equals(level.dimension());
+    }
+
     /**
      * 添加连接
      */
@@ -110,10 +114,6 @@ public class WireNetworkManager extends SavedData {
         setDirty();
         ModernFurniture.LOGGER.info("Added wire connection: {}", connection);
         return true;
-    }
-
-    public static boolean isInSameDimension(Level level, ServerPlayer player) {
-        return player.level().dimension().equals(level.dimension());
     }
 
     /**

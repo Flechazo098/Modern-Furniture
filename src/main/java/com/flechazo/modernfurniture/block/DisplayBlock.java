@@ -25,12 +25,13 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public abstract class AbstractDisplayBlock extends Block implements EntityBlock {
+public class DisplayBlock extends Block implements EntityBlock {
+    public final String COLOR;
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
 
-    public AbstractDisplayBlock() {
+    public DisplayBlock(String color) {
         super(BlockBehaviour.Properties.of()
                 .strength(2.0F, 6.0F)
                 .noOcclusion()
@@ -39,6 +40,11 @@ public abstract class AbstractDisplayBlock extends Block implements EntityBlock 
         this.registerDefaultState(this.defaultBlockState()
                 .setValue(POWERED, false)
                 .setValue(FACING, Direction.NORTH));
+        this.COLOR = color;
+    }
+
+    public String getColor() {
+        return COLOR;
     }
 
     @Override

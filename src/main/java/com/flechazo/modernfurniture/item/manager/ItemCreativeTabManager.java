@@ -1,6 +1,7 @@
 package com.flechazo.modernfurniture.item.manager;
 
 import com.flechazo.modernfurniture.ModernFurniture;
+import com.flechazo.modernfurniture.block.manager.BlockItemManager;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;

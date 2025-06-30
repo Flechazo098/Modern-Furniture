@@ -1,10 +1,10 @@
 package com.flechazo.modernfurniture;
 
 import com.flechazo.modernfurniture.block.manager.BlockEntityManager;
+import com.flechazo.modernfurniture.block.manager.BlockItemManager;
 import com.flechazo.modernfurniture.block.manager.BlockManager;
 import com.flechazo.modernfurniture.config.ConfigManager;
 import com.flechazo.modernfurniture.event.EventManager;
-import com.flechazo.modernfurniture.item.manager.BlockItemManager;
 import com.flechazo.modernfurniture.item.manager.ItemCreativeTabManager;
 import com.flechazo.modernfurniture.item.manager.ItemManager;
 import com.flechazo.modernfurniture.network.NetworkHandler;

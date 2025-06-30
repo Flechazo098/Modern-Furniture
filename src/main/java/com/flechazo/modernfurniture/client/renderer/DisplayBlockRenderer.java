@@ -1,6 +1,6 @@
 package com.flechazo.modernfurniture.client.renderer;
 
-import com.flechazo.modernfurniture.block.AbstractDisplayBlock;
+import com.flechazo.modernfurniture.block.DisplayBlock;
 import com.flechazo.modernfurniture.block.entity.DisplayBlockEntity;
 import com.flechazo.modernfurniture.client.model.DisplayBlockModel;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -17,7 +17,7 @@ public class DisplayBlockRenderer extends GeoBlockRenderer<DisplayBlockEntity> {
 
     @Override
     public void renderRecursively(PoseStack poseStack, DisplayBlockEntity animatable, GeoBone bone, RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
-        boolean isPowered = animatable.getBlockState().getValue(AbstractDisplayBlock.POWERED);
+        boolean isPowered = animatable.getBlockState().getValue(DisplayBlock.POWERED);
 
         if (bone.getName().equals("main") && isPowered) {
             packedLight = 15728880;

@@ -1,7 +1,6 @@
-package com.flechazo.modernfurniture.item.manager;
+package com.flechazo.modernfurniture.block.manager;
 
 import com.flechazo.modernfurniture.ModernFurniture;
-import com.flechazo.modernfurniture.block.manager.BlockManager;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.DeferredRegister;

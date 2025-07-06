@@ -16,23 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 public class ConfigScreen extends Screen {
-    // Stores widget references for current page
-    private final Map<String, AbstractWidget> configWidgets = new HashMap<>();
-    // Stores modified configuration values across pages
-    private final Map<String, Object> modifiedConfigCache = new HashMap<>();
-    // Original configuration entries
-    private final List<Map.Entry<String, Object>> configEntries;
-
-    private final boolean isClient;
-
-    private ConfigScreen origin = null;
-
-    // Pagination variables
-    private int currentPage = 0;
-    private int itemsPerPage = 0;
-    private int totalPages = 0;
-    private int panelHeight = 0;
-
     // UI layout constants
     private static final int ITEM_HEIGHT = 25;
     private static final int MARGIN = 10;
@@ -42,6 +25,19 @@ public class ConfigScreen extends Screen {
     private static final int BUTTON_HEIGHT = 20;
     private static final int PANEL_TOP = 30;
     private static final int PANEL_BOTTOM_MARGIN = 50;
+    // Stores widget references for current page
+    private final Map<String, AbstractWidget> configWidgets = new HashMap<>();
+    // Stores modified configuration values across pages
+    private final Map<String, Object> modifiedConfigCache = new HashMap<>();
+    // Original configuration entries
+    private final List<Map.Entry<String, Object>> configEntries;
+    private final boolean isClient;
+    private ConfigScreen origin = null;
+    // Pagination variables
+    private int currentPage = 0;
+    private int itemsPerPage = 0;
+    private int totalPages = 0;
+    private int panelHeight = 0;
 
     public ConfigScreen(Map<String, Object> serverConfig, boolean isClient) {
         super(Component.literal("Modern Furniture Config"));

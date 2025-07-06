@@ -8,15 +8,15 @@ import com.flechazo.modernfurniture.event.EventManager;
 import com.flechazo.modernfurniture.item.manager.ItemCreativeTabManager;
 import com.flechazo.modernfurniture.item.manager.ItemManager;
 import com.flechazo.modernfurniture.network.NetworkHandler;
+import com.mojang.logging.LogUtils;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 
 @Mod(ModernFurniture.MODID)
 public class ModernFurniture {
     public static final String MODID = "modern_furniture";
-    public static final Logger LOGGER = LogManager.getLogger();
+    public static final Logger LOGGER = LogUtils.getLogger();
 
     public ModernFurniture(FMLJavaModLoadingContext context) {
         var modEventBus = context.getModEventBus();

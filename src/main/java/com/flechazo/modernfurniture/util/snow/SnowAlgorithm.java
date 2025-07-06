@@ -240,10 +240,10 @@ public class SnowAlgorithm {
      * 动态参数类
      */
     private static class DynamicParameters {
+        private final AtomicInteger maxProcessPerTick;
         private volatile double poissonLambda;
         private volatile double densityFactor;
         private volatile double spatialVariance;
-        private final AtomicInteger maxProcessPerTick;
 
         DynamicParameters(int roomSize) {
             this.maxProcessPerTick = new AtomicInteger(Math.max(10, roomSize / 10));

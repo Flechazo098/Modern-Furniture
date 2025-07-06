@@ -26,9 +26,9 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class DisplayBlock extends Block implements EntityBlock {
-    public final String COLOR;
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public final String COLOR;
 
 
     public DisplayBlock(String color) {

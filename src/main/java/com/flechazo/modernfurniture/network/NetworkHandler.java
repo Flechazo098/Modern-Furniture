@@ -7,6 +7,14 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 
 public class NetworkHandler {
+    public static void register(IEventBus bus) {
+        bus.addListener(NetworkHandler::commonSetup);
+    }
+
+    private static void commonSetup(FMLCommonSetupEvent event) {
+        NETWORK.registerPackets();
+    }
+
     private static final PacketHandler NETWORK = new PacketHandler("1.0.0") {
         @Override
         public void registerPackets() {
@@ -25,14 +33,6 @@ public class NetworkHandler {
         }
     };
 
-    public static void register(IEventBus bus) {
-        bus.addListener(NetworkHandler::commonSetup);
-    }
-
-    private static void commonSetup(FMLCommonSetupEvent event) {
-        NETWORK.registerPackets();
-    }
-
     public static void sendToServer(PacketHandler.AbstractPacket packet) {
         NETWORK.sendToServer(packet);
     }
@@ -40,4 +40,6 @@ public class NetworkHandler {
     public static void sendToClient(PacketHandler.AbstractPacket packet, ServerPlayer player) {
         NETWORK.sendToClient(packet, player);
     }
+
+
 }

@@ -117,6 +117,7 @@ public class ConfigScreen extends Screen {
                                 "config.modern_furniture.switch_to_server" :
                                 "config.modern_furniture.switch_to_client"),
                         button -> {
+                            saveCurrentPageChanges();
                             if (origin != null) {
                                 Minecraft.getInstance().setScreen(origin);
                             } else {
